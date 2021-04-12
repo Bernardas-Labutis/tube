@@ -21,7 +21,7 @@ public class AWSCloudFrontUtils {
     private PrivateKey privateKey;
 
     @PostConstruct
-    private void init() throws Exception{
+    private void init() throws Exception {
         cloudFrontClient = CloudFrontClient.builder()
                 .region(Region.AWS_GLOBAL)
                 .credentialsProvider(AWSUtils.getCredentialsProvider(awsConfig.getAccessKeyId(), awsConfig.getAccessKeySecret()))

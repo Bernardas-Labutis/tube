@@ -22,7 +22,7 @@ public class AWSS3Utils {
     private Map<String, SortedMap<Integer, String>> multipartUploadMap;
 
     @PostConstruct
-    private void init(){
+    private void init() {
         s3Client = S3Client.builder()
                 .region(AWSUtils.getRegion(awsConfig.getRegion()))
                 .credentialsProvider(AWSUtils.getCredentialsProvider(awsConfig.getAccessKeyId(), awsConfig.getAccessKeySecret()))
