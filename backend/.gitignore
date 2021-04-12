@@ -42,3 +42,5 @@ secrets.yml
 .gradletasknamecache
 .sts4-cache
 log/
+*.der
+secret.properties
