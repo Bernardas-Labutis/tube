@@ -19,7 +19,7 @@ public class AWSS3Utils {
     private S3Client s3Client;
 
     // multipart upload map: uploadId->{partNumber->eTag}
-    private Map<String, SortedMap<Integer, String>> multipartUploadMap;
+    private Map<String, MultipartUploadPartContainer> multipartUploadMap;
 
     @PostConstruct
     private void init() {
@@ -37,7 +37,7 @@ public class AWSS3Utils {
                 .contentType(contentType)
                 .build());
         //TreeMap so the entries are ordered
-        multipartUploadMap.put(response.uploadId(), new TreeMap<>());
+        multipartUploadMap.put(response.uploadId(), new MultipartUploadPartContainer(path));
         return response;
     }
 
@@ -45,29 +45,29 @@ public class AWSS3Utils {
         return createMultipartUpload(path, "binary/octet-stream");
     }
 
-    public UploadPartResponse uploadPart(String uploadId, String path, Integer partNumber, byte[] part) {
+    public UploadPartResponse uploadPart(String uploadId, Integer partNumber, byte[] part) {
         UploadPartResponse response = s3Client.uploadPart(UploadPartRequest.builder()
                 .bucket(awsConfig.getBucketName())
                 .uploadId(uploadId)
-                .key(path)
+                .key(multipartUploadMap.get(uploadId).getPath())
                 .partNumber(partNumber)
                 .build(), RequestBody.fromBytes(part));
-        multipartUploadMap.get(uploadId).put(partNumber, response.eTag());
+        multipartUploadMap.get(uploadId).getParts().put(partNumber, response.eTag());
         return response;
     }
 
-    public UploadPartResponse uploadPart(String uploadId, String path, byte[] part) {
+    public UploadPartResponse uploadPart(String uploadId, byte[] part) {
         Integer partNumber = 1;
-        if (!multipartUploadMap.get(uploadId).isEmpty()) {
-            partNumber = multipartUploadMap.get(uploadId).lastKey() + 1;
+        if (!multipartUploadMap.get(uploadId).getParts().isEmpty()) {
+            partNumber = multipartUploadMap.get(uploadId).getParts().lastKey() + 1;
         }
-        return uploadPart(uploadId, path, partNumber, part);
+        return uploadPart(uploadId, partNumber, part);
     }
 
-    public CompleteMultipartUploadResponse completeMultipartUpload(String uploadId, String path) {
+    public CompleteMultipartUploadResponse completeMultipartUpload(String uploadId) {
 
         CompletedMultipartUpload completedMultipartUpload = CompletedMultipartUpload.builder().parts(
-                multipartUploadMap.get(uploadId).entrySet().stream()
+                multipartUploadMap.get(uploadId).getParts().entrySet().stream()
                         .map(entry -> CompletedPart.builder()
                                 .partNumber(entry.getKey())
                                 .eTag(entry.getValue())
@@ -77,7 +77,7 @@ public class AWSS3Utils {
         //jei čia nulūžta dėl upload size too small reiškia parts buvo mažesni už 5 MB, tik paskutinis part gali būt mažesnis už 5 * 1024 * 1024
         CompleteMultipartUploadResponse response = s3Client.completeMultipartUpload(CompleteMultipartUploadRequest.builder()
                 .bucket(awsConfig.getBucketName())
-                .key(path)
+                .key(multipartUploadMap.get(uploadId).getPath())
                 .uploadId(uploadId)
                 .multipartUpload(completedMultipartUpload)
                 .build());
@@ -127,11 +127,13 @@ public class AWSS3Utils {
                 .build());
         return deleteObjectResponse;
     }
+
     public static class MoveObjectResponse {
         private CopyObjectResponse copyObjectResponse;
         private DeleteObjectResponse deleteObjectResponse;
 
-        public MoveObjectResponse() {}
+        public MoveObjectResponse() {
+        }
 
         public MoveObjectResponse(CopyObjectResponse copyObjectResponse, DeleteObjectResponse deleteObjectResponse) {
             this.copyObjectResponse = copyObjectResponse;
@@ -155,4 +157,34 @@ public class AWSS3Utils {
         }
     }
 
+    private static class MultipartUploadPartContainer {
+        private SortedMap<Integer, String> parts;
+        private String path;
+
+        public MultipartUploadPartContainer() {
+            parts = new TreeMap<>();
+        }
+
+        public MultipartUploadPartContainer(String path) {
+            this();
+            this.path = path;
+        }
+
+        public SortedMap<Integer, String> getParts() {
+            return parts;
+        }
+
+        public void setParts(SortedMap<Integer, String> parts) {
+            this.parts = parts;
+        }
+
+        public String getPath() {
+            return path;
+        }
+
+        public void setPath(String path) {
+            this.path = path;
+        }
+
+    }
 }
