@@ -1,6 +1,6 @@
 package lt.vu.tube.web;
 
-import lt.vu.tube.dao.VideoDao;
+import lt.vu.tube.repository.VideoRepository;
 import lt.vu.tube.entity.Video;
 import lt.vu.tube.enums.VideoStatusEnum;
 import lt.vu.tube.response.VideoUploadResponse;
@@ -11,16 +11,12 @@ import org.apache.tomcat.util.http.fileupload.FileItemStream;
 import org.apache.tomcat.util.http.fileupload.servlet.ServletFileUpload;
 import org.apache.tomcat.util.http.fileupload.util.Streams;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import software.amazon.awssdk.awscore.exception.AwsServiceException;
-import software.amazon.awssdk.services.s3.model.CreateMultipartUploadResponse;
 
 import javax.persistence.EntityManager;
 import javax.servlet.http.HttpServletRequest;
-import javax.transaction.Transactional;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
@@ -42,7 +38,7 @@ public class VideoController {
     private EntityManager entityManager;
 
     @Autowired
-    private VideoDao videoDao;
+    private VideoRepository videoRepository;
 
     private static Logger logger = Logger.getLogger(VideoController.class.toString());
 
@@ -95,14 +91,14 @@ public class VideoController {
                 //Create video object to get the path we're going to use
                 video = new Video();
                 video.setFileName(fileName);
-                video = videoDao.save(video);
+                video = videoRepository.save(video);
 
                 //Start upload
                 video.setPath("videos/" + video.getId().toString());
                 video.setMime(item.getHeaders().getHeader("content-type")); //Later update this after upload by extracting metadata
                 var response = s3Utils.createMultipartUpload(video.getPath(), item.getHeaders().getHeader("content-type"));
                 video.setStatus(VideoStatusEnum.UPLOADING);
-                video = videoDao.save(video);
+                video = videoRepository.save(video);
 
                 try {
                     long fileLength = 0L;
@@ -118,13 +114,13 @@ public class VideoController {
                     s3Utils.completeMultipartUpload(response.uploadId());
                     video.setFileSize(fileLength);
                     video.setStatus(VideoStatusEnum.AVAILABLE);
-                    video = videoDao.save(video);
+                    video = videoRepository.save(video);
                 }
                 catch (AwsServiceException exception) {
                     //Something happen abort to cleanup
                     s3Utils.abortMultipartUpload(response.uploadId());
                     video.setStatus(VideoStatusEnum.UPLOAD_FAILED);
-                    video = videoDao.save(video);
+                    video = videoRepository.save(video);
                     logger.log(Level.SEVERE, "Failed to upload: " + exception.getMessage(), exception);
                     return VideoUploadResponse.fail("Failed to store the video");
                 }
@@ -148,13 +144,13 @@ public class VideoController {
     //Temporary delete later
     @RequestMapping("/videos")
     public List<Video> getVideos() throws IOException {
-        return StreamSupport.stream(videoDao.findAll().spliterator(), false).collect(Collectors.toList());
+        return StreamSupport.stream(videoRepository.findAll().spliterator(), false).collect(Collectors.toList());
     }
 
     //Temporary delete later
     @RequestMapping("/videoLinks")
     public Map<UUID, String> getVideoLinks() throws IOException {
-        return StreamSupport.stream(videoDao.findAll().spliterator(), false)
+        return StreamSupport.stream(videoRepository.findAll().spliterator(), false)
             .collect(Collectors.toMap(Video::getId, v -> {
                 try {
                     return cloudFrontUtils.getSignedUrl(v.getPath(), 3600);
