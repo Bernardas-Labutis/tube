@@ -33,18 +33,18 @@ import java.util.stream.StreamSupport;
 public class VideoController {
 
     @Autowired
-    AWSS3Utils s3Utils;
+    private AWSS3Utils s3Utils;
 
     @Autowired
-    AWSCloudFrontUtils cloudFrontUtils;
+    private AWSCloudFrontUtils cloudFrontUtils;
 
     @Autowired
-    EntityManager entityManager;
+    private EntityManager entityManager;
 
     @Autowired
-    VideoDao videoDao;
+    private VideoDao videoDao;
 
-    Logger logger = Logger.getLogger(getClass().toString());
+    private static Logger logger = Logger.getLogger(VideoController.class.toString());
 
     @RequestMapping(value = "/video/upload")
     public VideoUploadResponse uploadVideo(HttpServletRequest request) throws Exception {

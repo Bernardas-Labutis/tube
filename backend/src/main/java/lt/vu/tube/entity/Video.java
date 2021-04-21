@@ -37,7 +37,6 @@ public class Video {
     //@ManyToOne
     //private User owner;
 
-
     public UUID getId() {
         return id;
     }

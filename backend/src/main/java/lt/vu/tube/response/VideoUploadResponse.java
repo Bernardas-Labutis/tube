@@ -8,6 +8,7 @@ public class VideoUploadResponse implements Serializable {
     public String status;
     public String message;
     public UUID id;
+
     public VideoUploadResponse() {}
 
     public VideoUploadResponse(String status, String message, UUID id) {
@@ -51,6 +52,5 @@ public class VideoUploadResponse implements Serializable {
 
     public static VideoUploadResponse success (String message, UUID id) {
         return new VideoUploadResponse("success", message, id);
-
     }
 }
