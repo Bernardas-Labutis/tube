@@ -65,7 +65,6 @@ public class AWSS3Utils {
     }
 
     public CompleteMultipartUploadResponse completeMultipartUpload(String uploadId) {
-
         CompletedMultipartUpload completedMultipartUpload = CompletedMultipartUpload.builder().parts(
                 multipartUploadMap.get(uploadId).getParts().entrySet().stream()
                         .map(entry -> CompletedPart.builder()
@@ -80,6 +79,16 @@ public class AWSS3Utils {
                 .key(multipartUploadMap.get(uploadId).getPath())
                 .uploadId(uploadId)
                 .multipartUpload(completedMultipartUpload)
+                .build());
+        multipartUploadMap.remove(uploadId);
+        return response;
+    }
+
+    public AbortMultipartUploadResponse abortMultipartUpload(String uploadId) {
+        AbortMultipartUploadResponse response = s3Client.abortMultipartUpload(AbortMultipartUploadRequest.builder()
+                .bucket(awsConfig.getBucketName())
+                .key(multipartUploadMap.get(uploadId).getPath())
+                .uploadId(uploadId)
                 .build());
         multipartUploadMap.remove(uploadId);
         return response;
