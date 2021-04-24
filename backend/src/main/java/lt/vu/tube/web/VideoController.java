@@ -44,7 +44,8 @@ public class VideoController {
     private static Logger logger = Logger.getLogger(VideoController.class.toString());
 
     @RequestMapping(value = "/video/upload")
-    @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
+    //@PreAuthorize("hasAnyRole('ROLE_ADMIN')")
+    @PreAuthorize("hasAuthority('user:read')")
     public VideoUploadResponse uploadVideo(HttpServletRequest request) throws Exception {
         boolean isMultipart = ServletFileUpload.isMultipartContent(request);
         if (!isMultipart) {
@@ -139,21 +140,24 @@ public class VideoController {
 
     //Temporary delete later
     @RequestMapping("/video")
-    @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
+    //@PreAuthorize("hasAnyRole('ROLE_ADMIN')")
+    @PreAuthorize("hasAuthority('user:read')")
     public String uploadVideo() throws IOException {
         //Delete the resoource too
         return Streams.asString(getClass().getClassLoader().getResourceAsStream("video.html"));
     }
     //Temporary delete later
     @RequestMapping("/videos")
-    @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
+    //@PreAuthorize("hasAnyRole('ROLE_ADMIN')")
+    @PreAuthorize("hasAuthority('user:read')")
     public List<Video> getVideos() throws IOException {
         return StreamSupport.stream(videoRepository.findAll().spliterator(), false).collect(Collectors.toList());
     }
 
     //Temporary delete later
     @RequestMapping("/videoLinks")
-    @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
+    //@PreAuthorize("hasAnyRole('ROLE_ADMIN')")
+    @PreAuthorize("hasAuthority('user:read')")
     public Map<UUID, String> getVideoLinks() throws IOException {
         return StreamSupport.stream(videoRepository.findAll().spliterator(), false)
             .collect(Collectors.toMap(Video::getId, v -> {

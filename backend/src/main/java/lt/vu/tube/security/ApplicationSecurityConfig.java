@@ -1,7 +1,11 @@
 package lt.vu.tube.security;
 
+import lt.vu.tube.auth.ApplicationUserService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -21,9 +25,12 @@ import static lt.vu.tube.security.ApplicationUserRole.USER;
 public class ApplicationSecurityConfig extends WebSecurityConfigurerAdapter {
 
     private final PasswordEncoder passwordEncoder;
+    private final ApplicationUserService applicationUserService;
 
-    public ApplicationSecurityConfig(PasswordEncoder passwordEncoder){
+    @Autowired
+    public ApplicationSecurityConfig(PasswordEncoder passwordEncoder,ApplicationUserService applicationUserService){
         this.passwordEncoder = passwordEncoder;
+        this.applicationUserService = applicationUserService;
     }
 
     @Override
@@ -46,23 +53,37 @@ public class ApplicationSecurityConfig extends WebSecurityConfigurerAdapter {
                     .logoutSuccessUrl("/login");
     }
 
-    @Override
-    @Bean
-    protected UserDetailsService userDetailsService() {
-        UserDetails testUser = User.builder()
-                .username("test1")
-                .password(passwordEncoder.encode("test1"))
-                .roles(USER.name())
-                .build();
+//    @Override
+//    @Bean
+//    protected UserDetailsService userDetailsService() {
+//        UserDetails testUser = User.builder()
+//                .username("test1")
+//                .password(passwordEncoder.encode("test1"))
+//                .authorities(ADMIN.getGrantedAuthorities())
+//                //.roles(USER.name())
+//                .build();
+//
+//        UserDetails test2Admin = User.builder()
+//                .username("test2")
+//                .password(passwordEncoder.encode("test2"))
+//                .authorities(ADMIN.getGrantedAuthorities())
+//                //.roles(ADMIN.name())
+//                .build();
+//        return new InMemoryUserDetailsManager(
+//                testUser,
+//                test2Admin
+//        );
+//    }
+@Override
+protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+    auth.authenticationProvider(daoAuthenticationProvider());
+}
 
-        UserDetails test2Admin = User.builder()
-                .username("test2")
-                .password(passwordEncoder.encode("test2"))
-                .roles(ADMIN.name())
-                .build();
-        return new InMemoryUserDetailsManager(
-                testUser,
-                test2Admin
-        );
+    @Bean
+    public DaoAuthenticationProvider daoAuthenticationProvider() {
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+        provider.setPasswordEncoder(passwordEncoder);
+        provider.setUserDetailsService(applicationUserService);
+        return provider;
     }
 }
