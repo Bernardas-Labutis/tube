@@ -11,6 +11,7 @@ import org.apache.tomcat.util.http.fileupload.FileItemStream;
 import org.apache.tomcat.util.http.fileupload.servlet.ServletFileUpload;
 import org.apache.tomcat.util.http.fileupload.util.Streams;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import software.amazon.awssdk.awscore.exception.AwsServiceException;
@@ -43,6 +44,7 @@ public class VideoController {
     private static Logger logger = Logger.getLogger(VideoController.class.toString());
 
     @RequestMapping(value = "/video/upload")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
     public VideoUploadResponse uploadVideo(HttpServletRequest request) throws Exception {
         boolean isMultipart = ServletFileUpload.isMultipartContent(request);
         if (!isMultipart) {
@@ -137,18 +139,21 @@ public class VideoController {
 
     //Temporary delete later
     @RequestMapping("/video")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
     public String uploadVideo() throws IOException {
         //Delete the resoource too
         return Streams.asString(getClass().getClassLoader().getResourceAsStream("video.html"));
     }
     //Temporary delete later
     @RequestMapping("/videos")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
     public List<Video> getVideos() throws IOException {
         return StreamSupport.stream(videoRepository.findAll().spliterator(), false).collect(Collectors.toList());
     }
 
     //Temporary delete later
     @RequestMapping("/videoLinks")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
     public Map<UUID, String> getVideoLinks() throws IOException {
         return StreamSupport.stream(videoRepository.findAll().spliterator(), false)
             .collect(Collectors.toMap(Video::getId, v -> {
