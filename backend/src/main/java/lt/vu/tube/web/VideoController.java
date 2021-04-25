@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import software.amazon.awssdk.awscore.exception.AwsServiceException;
+import software.amazon.awssdk.services.s3.model.DeleteObjectResponse;
 
 import javax.persistence.EntityManager;
 import javax.servlet.http.HttpServletRequest;
@@ -142,10 +143,12 @@ public class VideoController {
     //TODO user permissions?
     @DeleteMapping(value = "/video/{id}")
     public ResponseEntity<UUID> hardDeleteVideo(@PathVariable UUID id) {
-        if (!videoRepository.existsById(id)) {
+        Optional<Video> video = videoRepository.findById(id);
+        if (video.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
-        videoRepository.deleteById(id);
+        video.get().setStatus(VideoStatusEnum.DELETED);
+        s3Utils.deleteFile(video.get().getPath());
         return new ResponseEntity<>(id, HttpStatus.OK);
     }
 
