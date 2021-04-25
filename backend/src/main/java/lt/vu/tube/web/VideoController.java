@@ -3,7 +3,6 @@ package lt.vu.tube.web;
 import lt.vu.tube.repository.VideoRepository;
 import lt.vu.tube.entity.Video;
 import lt.vu.tube.enums.VideoStatusEnum;
-import lt.vu.tube.response.VideoHardDeleteResponse;
 import lt.vu.tube.response.VideoUploadResponse;
 import lt.vu.tube.util.AWSCloudFrontUtils;
 import lt.vu.tube.util.AWSS3Utils;
@@ -12,6 +11,8 @@ import org.apache.tomcat.util.http.fileupload.FileItemStream;
 import org.apache.tomcat.util.http.fileupload.servlet.ServletFileUpload;
 import org.apache.tomcat.util.http.fileupload.util.Streams;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -140,12 +141,12 @@ public class VideoController {
 
     //TODO user permissions?
     @DeleteMapping(value = "/video/{id}")
-    public VideoHardDeleteResponse hardDeleteVideo(@PathVariable UUID id) {
+    public ResponseEntity<UUID> hardDeleteVideo(@PathVariable UUID id) {
         if (!videoRepository.existsById(id)) {
-            return VideoHardDeleteResponse.fail("video does not exist, id: " + id.toString());
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
         videoRepository.deleteById(id);
-        return VideoHardDeleteResponse.success("video successfully fully deleted", id);
+        return new ResponseEntity<>(id, HttpStatus.OK);
     }
 
     //Temporary delete later
