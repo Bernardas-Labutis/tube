@@ -61,11 +61,13 @@ export default class Trashcan extends Component {
         const { columns, dataList } = this.state;
 
         return (
+            <div>
+                <h2>Trashcan</h2>
             <TableWrapper
                 columns={columns}
                 dataSource={dataList}
                 className="isoEditableTable"
-            />
+            /></div>
         );
     }
 }
