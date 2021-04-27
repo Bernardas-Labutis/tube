@@ -42,7 +42,6 @@ public class AWSLambdaUtils {
                 .payload(SdkBytes.fromUtf8String(objectMapper.writeValueAsString(new MediaTypeRequest(key))))
                 .build();
         InvokeResponse response = lambdaClient.invoke(request);
-        Logger.getGlobal().info(response.payload().asUtf8String());
         return objectMapper.readValue(response.payload().asUtf8String(), new TypeReference<LambdaResponse<MediaTypeResponseBody>>() {});
     }
 

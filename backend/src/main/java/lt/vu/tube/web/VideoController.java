@@ -1,5 +1,6 @@
 package lt.vu.tube.web;
 
+import lt.vu.tube.config.VideoConfig;
 import lt.vu.tube.model.LambdaResponse;
 import lt.vu.tube.model.MediaTypeResponseBody;
 import lt.vu.tube.repository.VideoRepository;
@@ -45,7 +46,10 @@ public class VideoController {
     private VideoRepository videoRepository;
 
     @Autowired
-    private AWSLambdaUtils awsLambdaUtils;
+    private AWSLambdaUtils lambdaUtils;
+
+    @Autowired
+    VideoConfig videoConfig;
 
     private static Logger logger = Logger.getLogger(VideoController.class.toString());
 
@@ -120,11 +124,45 @@ public class VideoController {
                     //Finish upload
                     s3Utils.completeMultipartUpload(response.uploadId());
                     video.setFileSize(fileLength);
-                    video.setStatus(VideoStatusEnum.AVAILABLE);
+                    video.setStatus(VideoStatusEnum.PROCESSING);
                     video = videoRepository.save(video);
+                    LambdaResponse<MediaTypeResponseBody> mediaTypeResponse;
+                    try {
+                        mediaTypeResponse = lambdaUtils.getMediaType(video.getPath());
+                    }
+                    catch (Exception exception) {
+                        logger.log(Level.SEVERE, "getMediaType failed with exception: " + exception.getMessage(), exception);
+                        s3Utils.deleteFile(video.getPath());
+                        video.setStatus(VideoStatusEnum.INVALID);
+                        video = videoRepository.save(video);
+                        return VideoUploadResponse.fail("Failed to process the video");
+                    }
+
+                    if (mediaTypeResponse.getBody().getStatus().equals("success")) {
+                        if (videoConfig.getValidMimeTypes().contains(mediaTypeResponse.getBody().getMediaType())) {
+                            video.setStatus(VideoStatusEnum.AVAILABLE);
+                            video.setMime(mediaTypeResponse.getBody().getMediaType());
+                            video = videoRepository.save(video);
+                        }
+                        else {
+                            logger.log(Level.INFO, "Failed to upload video, invalid type: " + mediaTypeResponse.getBody().getMediaType());
+                            s3Utils.deleteFile(video.getPath());
+                            video.setStatus(VideoStatusEnum.INVALID);
+                            video = videoRepository.save(video);
+                            return VideoUploadResponse.fail("Invalid video file type");
+                        }
+                    }
+                    else {
+                        logger.log(Level.SEVERE, "getMediaType failed with error message: " + mediaTypeResponse.getBody().getMessage());
+                        s3Utils.deleteFile(video.getPath());
+                        video.setStatus(VideoStatusEnum.INVALID);
+                        video = videoRepository.save(video);
+                        return VideoUploadResponse.fail("Failed to process the video");
+                    }
+
                 }
                 catch (AwsServiceException exception) {
-                    //Something happen abort to cleanup
+                    //Something happened abort to cleanup
                     s3Utils.abortMultipartUpload(response.uploadId());
                     video.setStatus(VideoStatusEnum.UPLOAD_FAILED);
                     video = videoRepository.save(video);
@@ -152,7 +190,7 @@ public class VideoController {
     //Temporary delete later
     @RequestMapping("/video/type")
     public LambdaResponse<MediaTypeResponseBody> getData(@RequestParam String key) throws Exception {
-        return awsLambdaUtils.getMediaType(key);
+        return lambdaUtils.getMediaType(key);
     }
     //Temporary delete later
     @RequestMapping("/videos")
