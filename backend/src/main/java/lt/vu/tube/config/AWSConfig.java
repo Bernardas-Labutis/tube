@@ -12,13 +12,15 @@ public class AWSConfig {
     @Value("${tube.aws.access.key.id}")
     private String accessKeyId;
     @Value("${tube.aws.access.key.secret}")
-    private String accessSecretId;
+    private String accessKeySecretId;
     @Value("${tube.aws.keys.public.id}")
     private String publicKeyId;
     @Value("${tube.aws.region}")
     private String region;
     @Value("${tube.aws.bucket.name}")
     private String bucketName;
+    @Value("${tube.aws.lambda.getMediaType}")
+    private String getMediaTypeFunctionName;
 
     public String getDistributionID() {
         return distributionID;
@@ -29,7 +31,7 @@ public class AWSConfig {
     }
 
     public String getAccessKeySecret() {
-        return accessSecretId;
+        return accessKeySecretId;
     }
 
     public String getPublicKeyId() {
@@ -42,5 +44,9 @@ public class AWSConfig {
 
     public String getBucketName() {
         return bucketName;
+    }
+
+    public String getGetMediaTypeFunctionName() {
+        return getMediaTypeFunctionName;
     }
 }

@@ -1,10 +1,13 @@
 package lt.vu.tube.web;
 
+import lt.vu.tube.model.LambdaResponse;
+import lt.vu.tube.model.MediaTypeResponseBody;
 import lt.vu.tube.repository.VideoRepository;
 import lt.vu.tube.entity.Video;
 import lt.vu.tube.enums.VideoStatusEnum;
 import lt.vu.tube.response.VideoUploadResponse;
 import lt.vu.tube.util.AWSCloudFrontUtils;
+import lt.vu.tube.util.AWSLambdaUtils;
 import lt.vu.tube.util.AWSS3Utils;
 import org.apache.tomcat.util.http.fileupload.FileItemIterator;
 import org.apache.tomcat.util.http.fileupload.FileItemStream;
@@ -12,6 +15,7 @@ import org.apache.tomcat.util.http.fileupload.servlet.ServletFileUpload;
 import org.apache.tomcat.util.http.fileupload.util.Streams;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import software.amazon.awssdk.awscore.exception.AwsServiceException;
 
@@ -39,6 +43,9 @@ public class VideoController {
 
     @Autowired
     private VideoRepository videoRepository;
+
+    @Autowired
+    private AWSLambdaUtils awsLambdaUtils;
 
     private static Logger logger = Logger.getLogger(VideoController.class.toString());
 
@@ -140,6 +147,12 @@ public class VideoController {
     public String uploadVideo() throws IOException {
         //Delete the resoource too
         return Streams.asString(getClass().getClassLoader().getResourceAsStream("video.html"));
+    }
+
+    //Temporary delete later
+    @RequestMapping("/video/type")
+    public LambdaResponse<MediaTypeResponseBody> getData(@RequestParam String key) throws Exception {
+        return awsLambdaUtils.getMediaType(key);
     }
     //Temporary delete later
     @RequestMapping("/videos")
