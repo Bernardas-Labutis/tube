@@ -8,6 +8,26 @@ class AppRouter extends React.Component {
     const { url } = this.props;
     return (
       <Switch>
+          {/*<Route
+              exact
+              path={`${url}/my-videos`}
+              component={asyncComponent(() => import('../MyVideos'))}
+          />
+          <Route
+              exact
+              path={`${url}/public-videos`}
+              component={asyncComponent(() => import('../PublicVideos'))}
+          />
+          <Route
+              exact
+              path={`${url}/storage`}
+              component={asyncComponent(() => import('../Storage'))}
+          />*/}
+          <Route
+              exact
+              path={`${url}/trashcan`}
+              component={asyncComponent(() => import('../Trashcan/trashcan'))}
+          />
         <Route
           exact
           path={`${url}/`}
