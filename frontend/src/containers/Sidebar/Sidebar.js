@@ -136,6 +136,50 @@ class Sidebar extends Component {
               onOpenChange={this.onOpenChange}
               className="isoDashboardMenu"
             >
+              <Menu.Item key={"my-videos"}>
+                <Link to={`${url}/my-videos`}>
+                  <span className="isoMenuHolder" style={submenuColor}>
+                    <i className="ion-videocamera" />
+                    <span className="nav-text">
+                      My videos
+                    </span>
+                  </span>
+                </Link>
+              </Menu.Item>
+
+              <Menu.Item key={"public-videos"}>
+                <Link to={`${url}/public-videos`}>
+                  <span className="isoMenuHolder" style={submenuColor}>
+                    <i className="ion-social-youtube" />
+                    <span className="nav-text">
+                      Public videos
+                    </span>
+                  </span>
+                </Link>
+              </Menu.Item>
+
+              <Menu.Item key={"storage"}>
+                <Link to={`${url}/storage`}>
+                  <span className="isoMenuHolder" style={submenuColor}>
+                    <i className="ion-usb" />
+                    <span className="nav-text">
+                      Storage
+                    </span>
+                  </span>
+                </Link>
+              </Menu.Item>
+
+              <Menu.Item key={"trashcan"}>
+                <Link to={`${url}/trashcan`}>
+                  <span className="isoMenuHolder" style={submenuColor}>
+                    <i className="ion-ios-trash" />
+                    <span className="nav-text">
+                      Trashcan
+                    </span>
+                  </span>
+                </Link>
+              </Menu.Item>
+
               <Menu.Item key="mailbox">
                 <Link to={`${url}/mailbox`}>
                   <span className="isoMenuHolder" style={submenuColor}>

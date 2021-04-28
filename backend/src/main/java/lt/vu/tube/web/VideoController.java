@@ -12,9 +12,14 @@ import org.apache.tomcat.util.http.fileupload.servlet.ServletFileUpload;
 import org.apache.tomcat.util.http.fileupload.util.Streams;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import software.amazon.awssdk.awscore.exception.AwsServiceException;
+import software.amazon.awssdk.services.s3.model.DeleteObjectResponse;
 
 import javax.persistence.EntityManager;
 import javax.servlet.http.HttpServletRequest;
@@ -136,6 +141,18 @@ public class VideoController {
         else {
             return VideoUploadResponse.success("success", video.getId());
         }
+    }
+
+    //TODO user permissions?
+    @DeleteMapping(value = "/video/{id}")
+    public ResponseEntity<UUID> hardDeleteVideo(@PathVariable UUID id) {
+        Optional<Video> video = videoRepository.findById(id);
+        if (video.isEmpty()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        video.get().setStatus(VideoStatusEnum.DELETED);
+        s3Utils.deleteFile(video.get().getPath());
+        return new ResponseEntity<>(id, HttpStatus.OK);
     }
 
     //Temporary delete later
