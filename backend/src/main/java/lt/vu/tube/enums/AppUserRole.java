@@ -12,14 +12,14 @@ public enum AppUserRole {
     USER(Sets.newHashSet(USER_READ, USER_WRITE)),
     ADMIN(Sets.newHashSet(USER_READ, USER_WRITE));
 
-    private final Set<ApplicationUserPermission> permisions;
+    private final Set<ApplicationUserPermission> permissions;
 
-    AppUserRole(Set<ApplicationUserPermission> permisions){
-        this.permisions = permisions;
+    AppUserRole(Set<ApplicationUserPermission> permissions){
+        this.permissions = permissions;
     }
 
     public Set<ApplicationUserPermission> getPermissions(){
-        return permisions;
+        return permissions;
     }
 
     public Set<SimpleGrantedAuthority> getGrantedAuthorities() {

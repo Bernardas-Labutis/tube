@@ -1,9 +1,5 @@
 package lt.vu.tube.entity;
 
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 import lt.vu.tube.enums.AppUserRole;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -13,24 +9,10 @@ import javax.persistence.*;
 import java.util.Collection;
 import java.util.Collections;
 
-@Getter
-@Setter
-@EqualsAndHashCode
-@NoArgsConstructor
 @Entity
 public class AppUser implements UserDetails {
-
-
-    @SequenceGenerator(
-            name = "student_sequence",
-            sequenceName = "student_sequence",
-            allocationSize = 1
-    )
     @Id
-    @GeneratedValue(
-            strategy = GenerationType.SEQUENCE,
-            generator = "student_sequence"
-    )
+    @GeneratedValue
     private Long id;
     private String firstName;
     private String lastName;
@@ -38,8 +20,10 @@ public class AppUser implements UserDetails {
     private String password;
     @Enumerated(EnumType.STRING)
     private AppUserRole appUserRole;
-    private Boolean locked = false;
-    private Boolean enabled = true;
+    private boolean locked = false;
+    private boolean enabled = true;
+
+    public AppUser(){}
 
     public AppUser(String firstName,
                    String lastName,
@@ -55,8 +39,7 @@ public class AppUser implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        SimpleGrantedAuthority authority =
-                new SimpleGrantedAuthority(appUserRole.name());
+        SimpleGrantedAuthority authority = new SimpleGrantedAuthority(appUserRole.name());
         return Collections.singletonList(authority);
     }
 
@@ -65,18 +48,28 @@ public class AppUser implements UserDetails {
         return password;
     }
 
+    public void setPassword(String password) { this.password = password; }
+
     @Override
-    public String getUsername() {
-        return email;
-    }
+    public String getUsername() { return email; }
+
+    public void setUsername(String email) { this.email = email; }
 
     public String getFirstName() {
         return firstName;
     }
 
+    public void setFirstName(String firstName) { this.firstName = firstName; }
+
     public String getLastName() {
         return lastName;
     }
+
+    public void setLastName(String lastName) { this.lastName = lastName; }
+
+    public String getEmail() { return email; }
+
+    public void setEmail(String email) { this.email = email; }
 
     @Override
     public boolean isAccountNonExpired() {

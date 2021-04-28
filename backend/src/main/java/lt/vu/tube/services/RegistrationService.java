@@ -15,14 +15,14 @@ public class RegistrationService {
     private final EmailValidator emailValidator;
 
     public String register(RegistrationRequest request) {
-        boolean isValidEmail = emailValidator.
-                test(request.getEmail());
+        boolean isValidEmail = emailValidator.validate(request.getEmail());
 
         if (!isValidEmail) {
             throw new IllegalStateException("email not valid");
         }
 
-        String response = appUserService.signUpUser(
+
+        return appUserService.signUpUser(
                 new AppUser(
                         request.getFirstName(),
                         request.getLastName(),
@@ -31,6 +31,5 @@ public class RegistrationService {
                         AppUserRole.USER
                 )
         );
-        return response;
     }
 }

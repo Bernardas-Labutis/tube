@@ -23,7 +23,7 @@ public class HelloController {
     public String index() {
         AppUser user = AuthenticatedUser.getAuthenticatedUser();
         String username = "Anonymous Person";
-        if(user != null){
+        if (user != null) {
             username = user.getUsername();
         }
         return "Greetings from Spring Boot " + username +"!";

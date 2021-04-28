@@ -6,11 +6,11 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class AuthenticatedUser {
-    public static AppUser getAuthenticatedUser(){
+    public static AppUser getAuthenticatedUser() {
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if(principal instanceof AppUser) {
+        if (principal instanceof AppUser) {
             return ((AppUser) principal);
-        }else {
+        } else {
             return null;
         }
     }
