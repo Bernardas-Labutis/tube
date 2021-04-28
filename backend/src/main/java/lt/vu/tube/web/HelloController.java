@@ -1,7 +1,9 @@
 package lt.vu.tube.web;
 
+import lt.vu.tube.entity.AppUser;
 import lt.vu.tube.entity.TestPost;
 import lt.vu.tube.entity.TestUser;
+import lt.vu.tube.services.AuthenticatedUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -19,7 +21,12 @@ public class HelloController {
 
     @RequestMapping("/")
     public String index() {
-        return "Greetings from Spring Boot!";
+        AppUser user = AuthenticatedUser.getAuthenticatedUser();
+        String username = "Anonymous Person";
+        if(user != null){
+            username = user.getUsername();
+        }
+        return "Greetings from Spring Boot " + username +"!";
     }
 
     //Remove stuff below later
