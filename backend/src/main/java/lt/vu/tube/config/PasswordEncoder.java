@@ -1,4 +1,4 @@
-package lt.vu.tube.security;
+package lt.vu.tube.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

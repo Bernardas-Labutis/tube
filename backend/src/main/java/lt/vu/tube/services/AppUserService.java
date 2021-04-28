@@ -1,15 +1,14 @@
-package lt.vu.tube.appuser;
+package lt.vu.tube.services;
 
 
 import lombok.AllArgsConstructor;
+import lt.vu.tube.entity.AppUser;
+import lt.vu.tube.repository.AppUserRepository;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
-
-import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Service
 @AllArgsConstructor
@@ -36,7 +35,6 @@ public class AppUserService implements UserDetailsService {
                 .isPresent();
 
         if (userExists) {
-            // TODO check of attributes are the same and
             throw new IllegalStateException("email already taken");
         }
 
@@ -46,6 +44,6 @@ public class AppUserService implements UserDetailsService {
 
         appUserRepository.save(appUser);
 
-        return "It works";
+        return "OK";
     }
 }

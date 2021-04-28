@@ -1,4 +1,4 @@
-package lt.vu.tube.registration;
+package lt.vu.tube.requests;
 
 import lombok.*;
 

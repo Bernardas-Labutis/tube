@@ -1,5 +1,6 @@
-package lt.vu.tube.appuser;
+package lt.vu.tube.repository;
 
+import lt.vu.tube.entity.AppUser;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;

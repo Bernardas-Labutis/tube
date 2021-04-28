@@ -1,10 +1,10 @@
-package lt.vu.tube.registration;
+package lt.vu.tube.services;
 
 
 import lombok.AllArgsConstructor;
-import lt.vu.tube.appuser.AppUser;
-import lt.vu.tube.appuser.AppUserRole;
-import lt.vu.tube.appuser.AppUserService;
+import lt.vu.tube.entity.AppUser;
+import lt.vu.tube.enums.AppUserRole;
+import lt.vu.tube.requests.RegistrationRequest;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -22,16 +22,15 @@ public class RegistrationService {
             throw new IllegalStateException("email not valid");
         }
 
-        String token = appUserService.signUpUser(
+        String response = appUserService.signUpUser(
                 new AppUser(
                         request.getFirstName(),
                         request.getLastName(),
                         request.getEmail(),
                         request.getPassword(),
                         AppUserRole.USER
-
                 )
         );
-        return token;
+        return response;
     }
 }

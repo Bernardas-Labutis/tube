@@ -1,6 +1,8 @@
-package lt.vu.tube.registration;
+package lt.vu.tube.web;
 
 import lombok.AllArgsConstructor;
+import lt.vu.tube.requests.RegistrationRequest;
+import lt.vu.tube.services.RegistrationService;
 import org.springframework.web.bind.annotation.*;
 
 @RestController

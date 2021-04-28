@@ -1,7 +1,7 @@
-package lt.vu.tube.security.config;
+package lt.vu.tube.config;
 
 import lombok.AllArgsConstructor;
-import lt.vu.tube.appuser.AppUserService;
+import lt.vu.tube.services.AppUserService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -24,11 +24,17 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         http
                 .csrf().disable()
                 .authorizeRequests()
-                    .antMatchers("/api/v*/registration/**")
-                    .permitAll()
+                .antMatchers("/api/v*/registration/**").permitAll()
+                .antMatchers("/", "index", "/css/*", "/js/*").permitAll()
                 .anyRequest()
                 .authenticated().and()
-                .formLogin();
+                .formLogin().defaultSuccessUrl("/videos")
+                .and()
+                .logout()
+                    .logoutUrl("/logout")
+                    .clearAuthentication(true)
+                    .invalidateHttpSession(true)
+                    .logoutSuccessUrl("/login");
     }
 
     @Override
