@@ -15,10 +15,16 @@ import org.apache.tomcat.util.http.fileupload.FileItemStream;
 import org.apache.tomcat.util.http.fileupload.servlet.ServletFileUpload;
 import org.apache.tomcat.util.http.fileupload.util.Streams;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import software.amazon.awssdk.awscore.exception.AwsServiceException;
+import software.amazon.awssdk.services.s3.model.DeleteObjectResponse;
 
 import javax.persistence.EntityManager;
 import javax.servlet.http.HttpServletRequest;
@@ -54,6 +60,8 @@ public class VideoController {
     private static Logger logger = Logger.getLogger(VideoController.class.toString());
 
     @RequestMapping(value = "/video/upload")
+    //@PreAuthorize("hasAnyRole('ROLE_ADMIN')")
+    @PreAuthorize("hasAuthority('user:read')")
     public VideoUploadResponse uploadVideo(HttpServletRequest request) throws Exception {
         boolean isMultipart = ServletFileUpload.isMultipartContent(request);
         if (!isMultipart) {
@@ -180,8 +188,22 @@ public class VideoController {
         }
     }
 
+    //TODO user permissions?
+    @DeleteMapping(value = "/video/{id}")
+    public ResponseEntity<UUID> hardDeleteVideo(@PathVariable UUID id) {
+        Optional<Video> video = videoRepository.findById(id);
+        if (video.isEmpty()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        video.get().setStatus(VideoStatusEnum.DELETED);
+        s3Utils.deleteFile(video.get().getPath());
+        return new ResponseEntity<>(id, HttpStatus.OK);
+    }
+
     //Temporary delete later
     @RequestMapping("/video")
+    //@PreAuthorize("hasAnyRole('ROLE_ADMIN')")
+    @PreAuthorize("hasAuthority('user:read')")
     public String uploadVideo() throws IOException {
         //Delete the resoource too
         return Streams.asString(getClass().getClassLoader().getResourceAsStream("video.html"));
@@ -194,12 +216,16 @@ public class VideoController {
     }
     //Temporary delete later
     @RequestMapping("/videos")
+    //@PreAuthorize("hasAnyRole('ROLE_ADMIN')")
+    @PreAuthorize("hasAuthority('user:read')")
     public List<Video> getVideos() throws IOException {
         return StreamSupport.stream(videoRepository.findAll().spliterator(), false).collect(Collectors.toList());
     }
 
     //Temporary delete later
     @RequestMapping("/videoLinks")
+    //@PreAuthorize("hasAnyRole('ROLE_ADMIN')")
+    @PreAuthorize("hasAuthority('user:read')")
     public Map<UUID, String> getVideoLinks() throws IOException {
         return StreamSupport.stream(videoRepository.findAll().spliterator(), false)
             .collect(Collectors.toMap(Video::getId, v -> {

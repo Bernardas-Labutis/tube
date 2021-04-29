@@ -2,9 +2,9 @@ export default {
   apiUrl: 'http://joeylin.net/api/',
 };
 const siteConfig = {
-  siteName: 'joeylin.net',
+  siteName: 'Tube',
   siteIcon: 'ion-beer',
-  footerText: 'Isomorphic ©2017 Created with LOVE by Joey Lin',
+  footerText: 'Tube ©2021 Created with LOVE by Diamond Hands',
 };
 
 const themeConfig = {
