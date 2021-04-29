@@ -36,10 +36,11 @@ public class AWSLambdaUtils {
 
     //Key yra path to file
     public LambdaResponse<MediaTypeResponseBody> getMediaType(String key) throws JsonProcessingException {
+        String payloadJSON = objectMapper.writeValueAsString(new MediaTypeRequest(key));
         InvokeRequest request = InvokeRequest.builder()
                 .functionName(awsConfig.getGetMediaTypeFunctionName())
                 //object -> jsonString -> sdkBytes
-                .payload(SdkBytes.fromUtf8String(objectMapper.writeValueAsString(new MediaTypeRequest(key))))
+                .payload(SdkBytes.fromUtf8String(payloadJSON))
                 .build();
         InvokeResponse response = lambdaClient.invoke(request);
         return objectMapper.readValue(response.payload().asUtf8String(), new TypeReference<LambdaResponse<MediaTypeResponseBody>>() {});
