@@ -1,10 +1,14 @@
 package lt.vu.tube.web;
 
+import lt.vu.tube.config.VideoConfig;
+import lt.vu.tube.model.LambdaResponse;
+import lt.vu.tube.model.MediaTypeResponseBody;
 import lt.vu.tube.repository.VideoRepository;
 import lt.vu.tube.entity.Video;
 import lt.vu.tube.enums.VideoStatusEnum;
 import lt.vu.tube.response.VideoUploadResponse;
 import lt.vu.tube.util.AWSCloudFrontUtils;
+import lt.vu.tube.util.AWSLambdaUtils;
 import lt.vu.tube.util.AWSS3Utils;
 import org.apache.tomcat.util.http.fileupload.FileItemIterator;
 import org.apache.tomcat.util.http.fileupload.FileItemStream;
@@ -17,6 +21,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import software.amazon.awssdk.awscore.exception.AwsServiceException;
 import software.amazon.awssdk.services.s3.model.DeleteObjectResponse;
@@ -45,6 +50,12 @@ public class VideoController {
 
     @Autowired
     private VideoRepository videoRepository;
+
+    @Autowired
+    private AWSLambdaUtils lambdaUtils;
+
+    @Autowired
+    VideoConfig videoConfig;
 
     private static Logger logger = Logger.getLogger(VideoController.class.toString());
 
@@ -121,11 +132,45 @@ public class VideoController {
                     //Finish upload
                     s3Utils.completeMultipartUpload(response.uploadId());
                     video.setFileSize(fileLength);
-                    video.setStatus(VideoStatusEnum.AVAILABLE);
+                    video.setStatus(VideoStatusEnum.PROCESSING);
                     video = videoRepository.save(video);
+                    LambdaResponse<MediaTypeResponseBody> mediaTypeResponse;
+                    try {
+                        mediaTypeResponse = lambdaUtils.getMediaType(video.getPath());
+                    }
+                    catch (Exception exception) {
+                        logger.log(Level.SEVERE, "getMediaType failed with exception: " + exception.getMessage(), exception);
+                        s3Utils.deleteFile(video.getPath());
+                        video.setStatus(VideoStatusEnum.INVALID);
+                        video = videoRepository.save(video);
+                        return VideoUploadResponse.fail("Failed to process the video");
+                    }
+
+                    if (mediaTypeResponse.getBody().getStatus().equals("success")) {
+                        if (videoConfig.getValidMimeTypes().contains(mediaTypeResponse.getBody().getMediaType())) {
+                            video.setStatus(VideoStatusEnum.AVAILABLE);
+                            video.setMime(mediaTypeResponse.getBody().getMediaType());
+                            video = videoRepository.save(video);
+                        }
+                        else {
+                            logger.log(Level.INFO, "Failed to upload video, invalid type: " + mediaTypeResponse.getBody().getMediaType());
+                            s3Utils.deleteFile(video.getPath());
+                            video.setStatus(VideoStatusEnum.INVALID);
+                            video = videoRepository.save(video);
+                            return VideoUploadResponse.fail("Invalid video file type");
+                        }
+                    }
+                    else {
+                        logger.log(Level.SEVERE, "getMediaType failed with error message: " + mediaTypeResponse.getBody().getMessage());
+                        s3Utils.deleteFile(video.getPath());
+                        video.setStatus(VideoStatusEnum.INVALID);
+                        video = videoRepository.save(video);
+                        return VideoUploadResponse.fail("Failed to process the video");
+                    }
+
                 }
                 catch (AwsServiceException exception) {
-                    //Something happen abort to cleanup
+                    //Something happened abort to cleanup
                     s3Utils.abortMultipartUpload(response.uploadId());
                     video.setStatus(VideoStatusEnum.UPLOAD_FAILED);
                     video = videoRepository.save(video);
@@ -162,6 +207,12 @@ public class VideoController {
     public String uploadVideo() throws IOException {
         //Delete the resoource too
         return Streams.asString(getClass().getClassLoader().getResourceAsStream("video.html"));
+    }
+
+    //Temporary delete later
+    @RequestMapping("/video/type")
+    public LambdaResponse<MediaTypeResponseBody> getData(@RequestParam String key) throws Exception {
+        return lambdaUtils.getMediaType(key);
     }
     //Temporary delete later
     @RequestMapping("/videos")
