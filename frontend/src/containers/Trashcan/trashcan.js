@@ -8,7 +8,7 @@ import axios from 'axios';
 
 const dataList = new fakeData(3);
 async function getSoftDeleted() {
-    axios.get('http://localhost:8080/video/soft-deleted', {withCredentials: false})
+    axios.get('http://localhost:8080/video/soft-deleted', {})
         .then(function(response) {
             console.log(response);
         })
