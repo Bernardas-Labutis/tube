@@ -2,7 +2,6 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import Actions from '../../redux/themeSwitcher/actions.js';
 import Switcher from '../../components/themeSwitcher/themeSwitcher';
-import LanguageSwitcher from '../LanguageSwitcher';
 import Themes from './config';
 import bucketSVG from '../../image/bucket.svg';
 import IntlMessages from '../../components/utility/intlMessages';

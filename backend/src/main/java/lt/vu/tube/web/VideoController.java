@@ -1,6 +1,7 @@
 package lt.vu.tube.web;
 
 import lt.vu.tube.config.VideoConfig;
+import lt.vu.tube.dto.VideoDTO;
 import lt.vu.tube.model.LambdaResponse;
 import lt.vu.tube.model.MediaTypeResponseBody;
 import lt.vu.tube.repository.VideoRepository;
@@ -192,6 +193,8 @@ public class VideoController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
         video.get().setStatus(VideoStatusEnum.DELETED);
+        videoRepository.save(video.get());
+        //TODO uncomment after testings are done
         //s3Utils.deleteFile(video.get().getPath());
         return new ResponseEntity<>(id, HttpStatus.OK);
     }
@@ -207,9 +210,10 @@ public class VideoController {
     }
 
     @GetMapping(value = "/soft-deleted")
-    public List<Video> getSoftDeleted() {
+    public List<VideoDTO> getSoftDeleted() {
         return StreamSupport.stream(videoRepository.findAll().spliterator(), false)
                 .filter(video -> video.getStatus() == VideoStatusEnum.SOFT_DELETED)
+                .map(video -> new VideoDTO(video.getId().toString(), video.getId().toString(), video.getFileName(), video.getCreated(), video.getFileSize()))
                 .collect(Collectors.toList());
     }
 
