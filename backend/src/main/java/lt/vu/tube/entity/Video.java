@@ -29,7 +29,7 @@ public class Video {
 
     private Boolean isPublic = false;
 
-    private VideoStatusEnum status = VideoStatusEnum.NONE;
+    private String status = VideoStatusEnum.NONE.name();
 
     private String mime;
 
@@ -94,11 +94,11 @@ public class Video {
     }
 
     public VideoStatusEnum getStatus() {
-        return status;
+        return VideoStatusEnum.valueOf(status);
     }
 
     public void setStatus(VideoStatusEnum status) {
-        this.status = status;
+        this.status = status.name();
     }
 
     public String getMime() {
