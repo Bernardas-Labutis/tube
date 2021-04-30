@@ -18,11 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import software.amazon.awssdk.awscore.exception.AwsServiceException;
 import software.amazon.awssdk.services.s3.model.DeleteObjectResponse;
 
@@ -36,7 +32,9 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+@CrossOrigin(origins = "*")
 @RestController
+@RequestMapping(value = "/video")
 public class VideoController {
 
     @Autowired
@@ -57,9 +55,9 @@ public class VideoController {
     @Autowired
     VideoConfig videoConfig;
 
-    private static Logger logger = Logger.getLogger(VideoController.class.toString());
+    private static final Logger logger = Logger.getLogger(VideoController.class.toString());
 
-    @RequestMapping(value = "/video/upload")
+    @RequestMapping(value = "/upload")
     //@PreAuthorize("hasAnyRole('ROLE_ADMIN')")
     @PreAuthorize("hasAuthority('user:read')")
     public VideoUploadResponse uploadVideo(HttpServletRequest request) throws Exception {
@@ -189,19 +187,36 @@ public class VideoController {
     }
 
     //TODO user permissions?
-    @DeleteMapping(value = "/video/{id}")
+    @DeleteMapping(value = "/{id}")
     public ResponseEntity<UUID> hardDeleteVideo(@PathVariable UUID id) {
         Optional<Video> video = videoRepository.findById(id);
         if (video.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
         video.get().setStatus(VideoStatusEnum.DELETED);
-        s3Utils.deleteFile(video.get().getPath());
+        //s3Utils.deleteFile(video.get().getPath());
         return new ResponseEntity<>(id, HttpStatus.OK);
     }
 
+    @GetMapping(value = "/soft-delete/{id}")
+    public ResponseEntity<UUID> softDeleteVideo(@PathVariable UUID id) {
+        Optional<Video> video = videoRepository.findById(id);
+        if (video.isEmpty()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        video.get().setStatus(VideoStatusEnum.SOFT_DELETED);
+        return new ResponseEntity<>(id, HttpStatus.OK);
+    }
+
+    @GetMapping(value = "/soft-deleted")
+    public List<Video> getSoftDeleted() {
+        return StreamSupport.stream(videoRepository.findAll().spliterator(), false)
+                .filter(video -> video.getStatus() == VideoStatusEnum.SOFT_DELETED)
+                .collect(Collectors.toList());
+    }
+
     //Temporary delete later
-    @RequestMapping("/video")
+    @RequestMapping("")
     //@PreAuthorize("hasAnyRole('ROLE_ADMIN')")
     @PreAuthorize("hasAuthority('user:read')")
     public String uploadVideo() throws IOException {
@@ -210,7 +225,7 @@ public class VideoController {
     }
 
     //Temporary delete later
-    @RequestMapping("/video/type")
+    @RequestMapping("/type")
     public LambdaResponse<MediaTypeResponseBody> getData(@RequestParam String key) throws Exception {
         return lambdaUtils.getMediaType(key);
     }

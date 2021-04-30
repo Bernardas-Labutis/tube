@@ -1,11 +1,18 @@
-import React, { Component } from 'react';
+import React, {Component} from 'react';
 import clone from 'clone';
 import TableWrapper from '../../commonStyles/table.style';
-import { EditableCell, DeleteCell, RestoreCell } from '../../commonHelpers/helperCells';
+import {DeleteCell, EditableCell, RestoreCell} from '../../commonHelpers/helperCells';
 import {tableinfos} from "./configs";
 import fakeData from "../../mock/fakeData";
+import axios from 'axios';
 
 const dataList = new fakeData(3);
+async function getSoftDeleted() {
+    axios.get('http://localhost:8080/video/soft-deleted', {withCredentials: false})
+        .then(function(response) {
+            console.log(response);
+        })
+}
 
 export default class Trashcan extends Component {
     constructor(props) {
@@ -16,16 +23,16 @@ export default class Trashcan extends Component {
             columns: this.createcolumns(clone(tableinfos[0].columns)),
             dataList: dataList.getAll(),
         };
+        getSoftDeleted();
     }
     createcolumns(columns) {
-        const editColumnRender = (text, record, index) =>
+        columns[0].render = (text, record, index) =>
             <EditableCell
                 index={index}
                 columnsKey={columns[0].key}
                 value={text[columns[0].key]}
                 onChange={this.onCellChange}
             />;
-        columns[0].render = editColumnRender;
         const deleteColumn = {
             title: '',
             dataIndex: 'delete',

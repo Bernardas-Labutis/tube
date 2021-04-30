@@ -10,6 +10,9 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 
 @Configuration
 @AllArgsConstructor
@@ -48,5 +51,18 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         provider.setPasswordEncoder(bCryptPasswordEncoder);
         provider.setUserDetailsService(appUserService);
         return provider;
+    }
+
+    @Bean
+    public WebMvcConfigurer corsConfigurer () {
+        return new WebMvcConfigurerAdapter() {
+            @Override
+            public void addCorsMappings(CorsRegistry registry) {
+                registry.addMapping("/**")
+                        .allowedOrigins("http://localhost:3000")
+                        .allowedMethods("GET", "OPTIONS")
+                        .allowCredentials(false).maxAge(3600);
+            }
+        };
     }
 }
