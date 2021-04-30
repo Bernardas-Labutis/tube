@@ -54,7 +54,7 @@ export default class Trashcan extends Component {
             title: 'Actions',
             dataIndex: 'restore',
             render: (text, record, index) =>
-                <RestoreCell index={index} onDeleteCell={this.onRestoreCell} />,
+                <RestoreCell index={record.id} onRestoreCell={this.onRestoreCell} />,
         };
         columns.push(restoreColumn);
         columns.push(deleteColumn);
@@ -70,9 +70,8 @@ export default class Trashcan extends Component {
             .then(() => this.getData())
     };
     onRestoreCell = index => {
-        const { dataList } = this.state;
-        dataList.splice(index, 1);
-        this.setState({ dataList });
+        axios.get(`http://localhost:8080/video/recover/${index}`)
+            .then(() => this.getData())
     };
     render() {
         const { columns, dataList } = this.state;
