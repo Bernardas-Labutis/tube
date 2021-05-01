@@ -1,11 +1,10 @@
-import React, { Component } from 'react';
+import React, {Component} from 'react';
 import clone from 'clone';
 import TableWrapper from '../../commonStyles/table.style';
-import { EditableCell, DeleteCell, RestoreCell } from '../../commonHelpers/helperCells';
+import {DeleteCell, EditableCell, RestoreCell} from '../../commonHelpers/helperCells';
 import {tableinfos} from "./configs";
-import fakeData from "../../mock/fakeData";
-
-const dataList = new fakeData(3);
+import axios from 'axios';
+import dataMagic from "./dataMagic";
 
 export default class Trashcan extends Component {
     constructor(props) {
@@ -14,29 +13,48 @@ export default class Trashcan extends Component {
         this.onDeleteCell = this.onDeleteCell.bind(this);
         this.state = {
             columns: this.createcolumns(clone(tableinfos[0].columns)),
-            dataList: dataList.getAll(),
+            dataList: [],
         };
     }
+
+    getData() {
+        let data = []
+        axios.get('http://localhost:8080/video/soft-deleted', {})
+            .then(response => {
+                console.log(response);
+                data = response.data;
+                console.log(data);
+                if (data.length === 0) {
+                    this.setState({dataList: []})
+                } else {
+                    this.setState({dataList: new dataMagic(data.length, data).getAll()});
+                }
+            })
+    }
+
+    componentDidMount() {
+        this.getData();
+    }
+
     createcolumns(columns) {
-        const editColumnRender = (text, record, index) =>
+        columns[0].render = (text, record, index) =>
             <EditableCell
                 index={index}
                 columnsKey={columns[0].key}
                 value={text[columns[0].key]}
                 onChange={this.onCellChange}
             />;
-        columns[0].render = editColumnRender;
         const deleteColumn = {
             title: '',
             dataIndex: 'delete',
             render: (text, record, index) =>
-                <DeleteCell index={index} onDeleteCell={this.onDeleteCell} />,
+                <DeleteCell index={record.id} onDeleteCell={this.onDeleteCell} />,
         };
         const restoreColumn = {
             title: 'Actions',
             dataIndex: 'restore',
             render: (text, record, index) =>
-                <RestoreCell index={index} onDeleteCell={this.onRestoreCell} />,
+                <RestoreCell index={record.id} onRestoreCell={this.onRestoreCell} />,
         };
         columns.push(restoreColumn);
         columns.push(deleteColumn);
@@ -48,14 +66,12 @@ export default class Trashcan extends Component {
         this.setState({ dataList });
     }
     onDeleteCell = index => {
-        const { dataList } = this.state;
-        dataList.splice(index, 1);
-        this.setState({ dataList });
+        axios.delete(`http://localhost:8080/video/${index}`)
+            .then(() => this.getData())
     };
     onRestoreCell = index => {
-        const { dataList } = this.state;
-        dataList.splice(index, 1);
-        this.setState({ dataList });
+        axios.get(`http://localhost:8080/video/recover/${index}`)
+            .then(() => this.getData())
     };
     render() {
         const { columns, dataList } = this.state;

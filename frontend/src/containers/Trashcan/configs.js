@@ -1,4 +1,3 @@
-import React from 'react';
 import clone from 'clone';
 import { DateCell, ImageCell, LinkCell, TextCell } from '../../commonHelpers/helperCells';
 

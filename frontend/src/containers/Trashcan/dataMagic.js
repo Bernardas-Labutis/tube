@@ -1,4 +1,4 @@
-const tableData = JSON.parse(
+/*const tableData = JSON.parse(
     `[{
   "id": 0,
   "key": 0,
@@ -18,17 +18,18 @@ const tableData = JSON.parse(
   "uploadTime": "2021-04-19 16:01",
   "size": "3 MB"
 }]`,
-);
+);*/
 const sortOption = {};
-class fakeData {
-    constructor(size) {
+class dataMagic {
+    constructor(size, data) {
         this.size = size || 2000;
         this.datas = [];
+        this.tableData = data;
         this.sortKey = null;
         this.sortDir = null;
     }
     dataModel(index) {
-        return tableData[index];
+        return this.tableData[index];
     }
     getObjectAt(index) {
         if (index < 0 || index > this.size) {
@@ -77,4 +78,4 @@ class fakeData {
         return sortVal;
     }
 }
-export default fakeData;
+export default dataMagic;

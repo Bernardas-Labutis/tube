@@ -1,11 +1,12 @@
 package lt.vu.tube.web;
 
 import lt.vu.tube.config.VideoConfig;
+import lt.vu.tube.dto.VideoDTO;
+import lt.vu.tube.entity.Video;
+import lt.vu.tube.enums.VideoStatusEnum;
 import lt.vu.tube.model.LambdaResponse;
 import lt.vu.tube.model.MediaTypeResponseBody;
 import lt.vu.tube.repository.VideoRepository;
-import lt.vu.tube.entity.Video;
-import lt.vu.tube.enums.VideoStatusEnum;
 import lt.vu.tube.response.VideoUploadResponse;
 import lt.vu.tube.util.AWSCloudFrontUtils;
 import lt.vu.tube.util.AWSLambdaUtils;
@@ -15,16 +16,11 @@ import org.apache.tomcat.util.http.fileupload.FileItemStream;
 import org.apache.tomcat.util.http.fileupload.servlet.ServletFileUpload;
 import org.apache.tomcat.util.http.fileupload.util.Streams;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
 import software.amazon.awssdk.awscore.exception.AwsServiceException;
-import software.amazon.awssdk.services.s3.model.DeleteObjectResponse;
 
 import javax.persistence.EntityManager;
 import javax.servlet.http.HttpServletRequest;
@@ -37,29 +33,24 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 @RestController
+@RequestMapping(value = "/video")
 public class VideoController {
 
+    private static final Logger logger = Logger.getLogger(VideoController.class.toString());
+    @Autowired
+    VideoConfig videoConfig;
     @Autowired
     private AWSS3Utils s3Utils;
-
     @Autowired
     private AWSCloudFrontUtils cloudFrontUtils;
-
     @Autowired
     private EntityManager entityManager;
-
     @Autowired
     private VideoRepository videoRepository;
-
     @Autowired
     private AWSLambdaUtils lambdaUtils;
 
-    @Autowired
-    VideoConfig videoConfig;
-
-    private static Logger logger = Logger.getLogger(VideoController.class.toString());
-
-    @RequestMapping(value = "/video/upload")
+    @RequestMapping(value = "/upload")
     //@PreAuthorize("hasAnyRole('ROLE_ADMIN')")
     @PreAuthorize("hasAuthority('user:read')")
     public VideoUploadResponse uploadVideo(HttpServletRequest request) throws Exception {
@@ -95,12 +86,10 @@ public class VideoController {
                             break;
                     }
                 }
-            }
-            else if(neededParams.contains(item.getFieldName())) {
+            } else if (neededParams.contains(item.getFieldName())) {
                 if (neededParams.size() == 1) {
                     neededParams.remove(item.getFieldName());
-                }
-                else {
+                } else {
                     return VideoUploadResponse.fail("There are missing parameters or they are in wrong order");
                 }
                 //TODO: add checks for file size when user is created
@@ -137,8 +126,7 @@ public class VideoController {
                     LambdaResponse<MediaTypeResponseBody> mediaTypeResponse;
                     try {
                         mediaTypeResponse = lambdaUtils.getMediaType(video.getPath());
-                    }
-                    catch (Exception exception) {
+                    } catch (Exception exception) {
                         logger.log(Level.SEVERE, "getMediaType failed with exception: " + exception.getMessage(), exception);
                         s3Utils.deleteFile(video.getPath());
                         video.setStatus(VideoStatusEnum.INVALID);
@@ -151,16 +139,14 @@ public class VideoController {
                             video.setStatus(VideoStatusEnum.AVAILABLE);
                             video.setMime(mediaTypeResponse.getBody().getMediaType());
                             video = videoRepository.save(video);
-                        }
-                        else {
+                        } else {
                             logger.log(Level.INFO, "Failed to upload video, invalid type: " + mediaTypeResponse.getBody().getMediaType());
                             s3Utils.deleteFile(video.getPath());
                             video.setStatus(VideoStatusEnum.INVALID);
                             video = videoRepository.save(video);
                             return VideoUploadResponse.fail("Invalid video file type");
                         }
-                    }
-                    else {
+                    } else {
                         logger.log(Level.SEVERE, "getMediaType failed with error message: " + mediaTypeResponse.getBody().getMessage());
                         s3Utils.deleteFile(video.getPath());
                         video.setStatus(VideoStatusEnum.INVALID);
@@ -168,8 +154,7 @@ public class VideoController {
                         return VideoUploadResponse.fail("Failed to process the video");
                     }
 
-                }
-                catch (AwsServiceException exception) {
+                } catch (AwsServiceException exception) {
                     //Something happened abort to cleanup
                     s3Utils.abortMultipartUpload(response.uploadId());
                     video.setStatus(VideoStatusEnum.UPLOAD_FAILED);
@@ -182,26 +167,57 @@ public class VideoController {
         }
         if (!neededParams.isEmpty()) {
             return VideoUploadResponse.fail("There are missing parameters");
-        }
-        else {
+        } else {
             return VideoUploadResponse.success("success", video.getId());
         }
     }
 
     //TODO user permissions?
-    @DeleteMapping(value = "/video/{id}")
+    @DeleteMapping(value = "/{id}")
     public ResponseEntity<UUID> hardDeleteVideo(@PathVariable UUID id) {
         Optional<Video> video = videoRepository.findById(id);
         if (video.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
         video.get().setStatus(VideoStatusEnum.DELETED);
-        s3Utils.deleteFile(video.get().getPath());
+        videoRepository.save(video.get());
+        //TODO uncomment after testings are done
+        //s3Utils.deleteFile(video.get().getPath());
+        return new ResponseEntity<>(id, HttpStatus.OK);
+    }
+
+    @GetMapping(value = "/soft-delete/{id}")
+    public ResponseEntity<UUID> softDeleteVideo(@PathVariable UUID id) {
+        Optional<Video> video = videoRepository.findById(id);
+        if (video.isEmpty()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        video.get().setStatus(VideoStatusEnum.SOFT_DELETED);
+        videoRepository.save(video.get());
+        return new ResponseEntity<>(id, HttpStatus.OK);
+    }
+
+    @GetMapping(value = "/soft-deleted")
+    public List<VideoDTO> getSoftDeleted() {
+        return StreamSupport.stream(videoRepository.findAll().spliterator(), false)
+                .filter(video -> video.getStatus() == VideoStatusEnum.SOFT_DELETED)
+                .map(video -> new VideoDTO(video.getId().toString(), video.getId().toString(), video.getFileName(), video.getCreated(), video.getFileSize()))
+                .collect(Collectors.toList());
+    }
+
+    @GetMapping(value = "/recover/{id}")
+    public ResponseEntity<UUID> recoverVideo(@PathVariable UUID id) {
+        Optional<Video> video = videoRepository.findById(id);
+        if (video.isEmpty()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        video.get().setStatus(VideoStatusEnum.AVAILABLE);
+        videoRepository.save(video.get());
         return new ResponseEntity<>(id, HttpStatus.OK);
     }
 
     //Temporary delete later
-    @RequestMapping("/video")
+    @RequestMapping("")
     //@PreAuthorize("hasAnyRole('ROLE_ADMIN')")
     @PreAuthorize("hasAuthority('user:read')")
     public String uploadVideo() throws IOException {
@@ -210,10 +226,11 @@ public class VideoController {
     }
 
     //Temporary delete later
-    @RequestMapping("/video/type")
+    @RequestMapping("/type")
     public LambdaResponse<MediaTypeResponseBody> getData(@RequestParam String key) throws Exception {
         return lambdaUtils.getMediaType(key);
     }
+
     //Temporary delete later
     @RequestMapping("/videos")
     //@PreAuthorize("hasAnyRole('ROLE_ADMIN')")
@@ -228,13 +245,13 @@ public class VideoController {
     @PreAuthorize("hasAuthority('user:read')")
     public Map<UUID, String> getVideoLinks() throws IOException {
         return StreamSupport.stream(videoRepository.findAll().spliterator(), false)
-            .collect(Collectors.toMap(Video::getId, v -> {
-                try {
-                    return cloudFrontUtils.getSignedUrl(v.getPath(), 3600);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    return "";
-                }
-            }));
+                .collect(Collectors.toMap(Video::getId, v -> {
+                    try {
+                        return cloudFrontUtils.getSignedUrl(v.getPath(), 3600);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        return "";
+                    }
+                }));
     }
 }
