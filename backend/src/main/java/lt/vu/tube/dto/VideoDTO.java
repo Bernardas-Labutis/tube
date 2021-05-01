@@ -2,6 +2,7 @@ package lt.vu.tube.dto;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.commons.io.FileUtils;
 
 import java.sql.Timestamp;
 import java.time.format.DateTimeFormatter;
@@ -23,6 +24,6 @@ public class VideoDTO {
         this.key = key;
         this.title = title;
         this.uploadTime = uploadTime.toLocalDateTime().format(formatter);
-        this.size = size / 1000000 + " MB";
+        this.size = FileUtils.byteCountToDisplaySize(size);
     }
 }
