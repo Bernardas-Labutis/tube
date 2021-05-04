@@ -33,9 +33,8 @@ public class Video {
 
     private String mime;
 
-    // TODO: add these whenever we get users
-    //@ManyToOne
-    //private User owner;
+    @ManyToOne
+    private AppUser owner;
 
     public UUID getId() {
         return id;
@@ -107,5 +106,13 @@ public class Video {
 
     public void setMime(String mime) {
         this.mime = mime;
+    }
+
+    public AppUser getOwner() {
+        return owner;
+    }
+
+    public void setOwner(AppUser owner) {
+        this.owner = owner;
     }
 }
