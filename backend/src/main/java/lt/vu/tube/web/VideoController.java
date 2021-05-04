@@ -8,6 +8,7 @@ import lt.vu.tube.model.LambdaResponse;
 import lt.vu.tube.model.MediaTypeResponseBody;
 import lt.vu.tube.repository.AppUserRepository;
 import lt.vu.tube.repository.VideoRepository;
+import lt.vu.tube.response.VideoDownloadResponse;
 import lt.vu.tube.response.VideoUploadResponse;
 import lt.vu.tube.services.AuthenticatedUser;
 import lt.vu.tube.util.AWSCloudFrontUtils;
@@ -18,6 +19,7 @@ import org.apache.tomcat.util.http.fileupload.FileItemStream;
 import org.apache.tomcat.util.http.fileupload.servlet.ServletFileUpload;
 import org.apache.tomcat.util.http.fileupload.util.Streams;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -28,6 +30,8 @@ import javax.persistence.EntityManager;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -219,6 +223,37 @@ public class VideoController {
         video.get().setStatus(VideoStatusEnum.AVAILABLE);
         videoRepository.save(video.get());
         return new ResponseEntity<>(id, HttpStatus.OK);
+    }
+
+    @GetMapping(value = "/download/{id}")
+    public ResponseEntity<VideoDownloadResponse> downloadVideo(@PathVariable UUID id) {
+        Optional<Video> optionalVideo = videoRepository.findById(id);
+        if (optionalVideo.isEmpty()) {
+            return new ResponseEntity<>(VideoDownloadResponse.fail("Video with the specified id was not found"), HttpStatus.NOT_FOUND);
+        }
+        Video video = optionalVideo.get();
+        //Only allow to download your own videos
+        //Could be change to allow public videos to be downloaded by anyone
+        if (video.getOwner() == null || video.getOwner().equals(AuthenticatedUser.getAuthenticatedUser())) {
+            if (video.getStatus() != VideoStatusEnum.AVAILABLE && video.getStatus() != VideoStatusEnum.SOFT_DELETED) {
+                return new ResponseEntity<>(VideoDownloadResponse.fail("Video is not available for download"), HttpStatus.BAD_REQUEST);
+            }
+            var contentDisposition = ContentDisposition
+                    .builder("attachment")
+                    .filename(video.getFileName())
+                    .build();
+            try {
+                String url = cloudFrontUtils.getSignedUrl(video.getPath(), Map.of("response-content-disposition", contentDisposition.toString()), 3600);
+                return new ResponseEntity<>(VideoDownloadResponse.success("Success", url), HttpStatus.OK);
+            }
+            catch (Exception e) {
+                logger.log(Level.SEVERE, "Error while trying to sign a download url for " + id, e);
+                return new ResponseEntity<>(VideoDownloadResponse.fail("Error while trying to sign a download url"), HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+        }
+        else {
+            return new ResponseEntity<>(VideoDownloadResponse.fail("Unauthorized"), HttpStatus.UNAUTHORIZED);
+        }
     }
 
     //Temporary delete later
