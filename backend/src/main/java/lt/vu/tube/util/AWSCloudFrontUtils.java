@@ -1,5 +1,8 @@
 package lt.vu.tube.util;
 
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lt.vu.tube.config.AWSConfig;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -8,18 +11,22 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.cloudfront.CloudFrontClient;
 import software.amazon.awssdk.services.cloudfront.model.GetDistributionRequest;
 import javax.annotation.PostConstruct;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.spec.PKCS8EncodedKeySpec;
+import java.util.*;
+
 @Component
 public class AWSCloudFrontUtils {
 
     @Autowired
-    AWSConfig awsConfig;
+    private AWSConfig awsConfig;
 
     private String distributionDomainName;
     private CloudFrontClient cloudFrontClient;
     private PrivateKey privateKey;
-
+    private ObjectMapper objectMapper;
     @PostConstruct
     private void init() throws Exception {
         cloudFrontClient = CloudFrontClient.builder()
@@ -29,6 +36,7 @@ public class AWSCloudFrontUtils {
         fetchDistributionDomainName();
         Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
         initKeys();
+        objectMapper = new ObjectMapper();
     }
 
     private void fetchDistributionDomainName() {
@@ -37,15 +45,36 @@ public class AWSCloudFrontUtils {
                 .build()).distribution().domainName();
     }
 
-    //AWS java 2.0 neturi signing utility tai darau pats
     public String getSignedUrl(String path, Integer expiration) throws Exception {
+        return getSignedUrl(path, null, expiration);
+    }
+
+    //AWS java 2.0 neturi signing utility tai darau pats
+    public String getSignedUrl(String path, Map<String, String> params, Integer expiration) throws Exception {
         Long expirationDate = System.currentTimeMillis() / 1000 + expiration;
         String baseUrl = String.format("https://%s/%s", distributionDomainName, path);
+
+        if(params != null) {
+            baseUrl += "?";
+            var iterator = params.entrySet().iterator();
+            while (iterator.hasNext()) {
+                Map.Entry<String, String> entry = iterator.next();
+                baseUrl += String.format("%s=%s",
+                        URLEncoder.encode(entry.getKey(), StandardCharsets.UTF_8),
+                        URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8)
+                );
+                if(iterator.hasNext()) {
+                    baseUrl += "&";
+                }
+            }
+        }
         //Signature is a policy json with no white spaces encrypted with SHA1 RSA and BASE64
-        String signature = String.format("{\"Statement\":[{\"Resource\":\"%s\",\"Condition\":{\"DateLessThan\":{\"AWS:EpochTime\":%d}}}]}", baseUrl, expirationDate);
+        String signature = buildSignatureJson(baseUrl, expirationDate);
+        System.out.println("New: " + signature);
+        System.out.println("Old: " + String.format("{\"Statement\":[{\"Resource\":\"%s\",\"Condition\":{\"DateLessThan\":{\"AWS:EpochTime\":%d}}}]}", baseUrl, expirationDate));
         //Replace url unsafe chars
         signature = Base64Utils.encodeToString(signString(signature)).replace("+", "-").replace("=", "_").replace("/", "~");
-        return String.format("%s?Expires=%d&Signature=%s&Key-Pair-Id=%s", baseUrl, expirationDate, signature, awsConfig.getPublicKeyId());
+        return String.format("%s%sExpires=%d&Signature=%s&Key-Pair-Id=%s", baseUrl, params == null ? '?' : '&', expirationDate, signature, awsConfig.getPublicKeyId());
     }
 
     private byte[] signString(String input) throws SignatureException, NoSuchAlgorithmException, InvalidKeyException {
@@ -56,10 +85,30 @@ public class AWSCloudFrontUtils {
     }
 
     private void initKeys() throws Exception {
-
         byte[] privateKeyBytes = getClass().getClassLoader().getResourceAsStream("private_key.der").readAllBytes();
         PKCS8EncodedKeySpec privateSpec =  new PKCS8EncodedKeySpec(privateKeyBytes);
         KeyFactory keyFactory = KeyFactory.getInstance("RSA");
         privateKey = keyFactory.generatePrivate(privateSpec);
+    }
+
+    private String buildSignatureJson(String url, Long expirationDate) throws JsonProcessingException {
+        //Žinau kad nėra labai aišku bet tas json 5 lygių
+        //Ir šitos 10 eilučių yra geriau negu kurt 4 naujas klases
+        //Pirma sudarom statement map nes jam svarbus order
+        LinkedHashMap<String, Object> statement = new LinkedHashMap<>();
+        statement.put("Resource", url);
+        statement.put("Condition",
+                Map.of(
+                        "DateLessThan", Map.of(
+                                "AWS:EpochTime", expirationDate
+                        )
+                )
+        );
+        Map<String, Object> jsonMap = Map.of(
+                "Statement", List.of(
+                        statement
+                )
+        );
+        return new ObjectMapper().writeValueAsString(jsonMap);
     }
 }
