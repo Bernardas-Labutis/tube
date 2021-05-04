@@ -6,6 +6,7 @@ import lt.vu.tube.entity.Video;
 import lt.vu.tube.enums.VideoStatusEnum;
 import lt.vu.tube.model.LambdaResponse;
 import lt.vu.tube.model.MediaTypeResponseBody;
+import lt.vu.tube.repository.AppUserRepository;
 import lt.vu.tube.repository.VideoRepository;
 import lt.vu.tube.response.VideoUploadResponse;
 import lt.vu.tube.services.AuthenticatedUser;
@@ -50,6 +51,8 @@ public class VideoController {
     private VideoRepository videoRepository;
     @Autowired
     private AWSLambdaUtils lambdaUtils;
+    @Autowired
+    private AppUserRepository appUserRepository;
 
     @RequestMapping(value = "/upload")
     //@PreAuthorize("hasAnyRole('ROLE_ADMIN')")
@@ -239,6 +242,16 @@ public class VideoController {
     @PreAuthorize("hasAuthority('user:read')")
     public List<Video> getVideos() throws IOException {
         return StreamSupport.stream(videoRepository.findAll().spliterator(), false).collect(Collectors.toList());
+    }
+
+    //Temporary delete later
+    @RequestMapping("/videos/{id}")
+    //@PreAuthorize("hasAnyRole('ROLE_ADMIN')")
+    @PreAuthorize("hasAuthority('user:read')")
+    public List<Video> getVideos(@PathVariable Long id) throws IOException {
+        //Galima naudot appUserRepository.get(id) tada bus tik reference
+        //Bet tada negalima tiesiog video paverst į json, nes owner būna tik reference kas nesiverčia į json
+        return StreamSupport.stream(videoRepository.findVideosByOwner(appUserRepository.findById(id).orElse(null)).spliterator(), false).collect(Collectors.toList());
     }
 
     //Temporary delete later
