@@ -8,6 +8,7 @@ import lt.vu.tube.model.LambdaResponse;
 import lt.vu.tube.model.MediaTypeResponseBody;
 import lt.vu.tube.repository.VideoRepository;
 import lt.vu.tube.response.VideoUploadResponse;
+import lt.vu.tube.services.AuthenticatedUser;
 import lt.vu.tube.util.AWSCloudFrontUtils;
 import lt.vu.tube.util.AWSLambdaUtils;
 import lt.vu.tube.util.AWSS3Utils;
@@ -99,6 +100,7 @@ public class VideoController {
                 //Create video object to get the path we're going to use
                 video = new Video();
                 video.setFileName(fileName);
+                video.setOwner(AuthenticatedUser.getAuthenticatedUser());
                 video = videoRepository.save(video);
 
                 //Start upload

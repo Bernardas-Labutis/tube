@@ -8,6 +8,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import javax.persistence.*;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 @Entity
 public class AppUser implements UserDetails {
@@ -18,6 +19,8 @@ public class AppUser implements UserDetails {
     private String lastName;
     private String email;
     private String password;
+    @OneToMany(mappedBy = "owner")
+    List<Video> videos;
     @Enumerated(EnumType.STRING)
     private AppUserRole appUserRole;
     private boolean locked = false;
