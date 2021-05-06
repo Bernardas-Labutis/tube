@@ -304,4 +304,32 @@ public class VideoController {
                     }
                 }));
     }
+
+    @RequestMapping("/viewingUrl/{id}")
+    @PreAuthorize("hasAuthority('user:read')")
+    public ResponseEntity<String> getVideoViewingUrl(@PathVariable UUID id) {
+        Optional<Video> optionalVideo = videoRepository.findById(id);
+        if (optionalVideo.isEmpty()) {
+            return new ResponseEntity<>("Video with the specified id was not found", HttpStatus.NOT_FOUND);
+        }
+        Video video = optionalVideo.get();
+        //Allow to view unowned, your own and public videos
+        if (video.getOwner() == null || video.getOwner().equals(AuthenticatedUser.getAuthenticatedUser()) || video.getPublic()) {
+            if (video.getStatus() != VideoStatusEnum.AVAILABLE && video.getStatus() != VideoStatusEnum.SOFT_DELETED) {
+                return new ResponseEntity<>("Video url not available", HttpStatus.BAD_REQUEST);
+            }
+
+            try {
+                String url = cloudFrontUtils.getSignedUrl(video.getPath(), 3600);
+                return new ResponseEntity<>(url, HttpStatus.OK);
+            }
+            catch (Exception e) {
+                logger.log(Level.SEVERE, "Error while trying to sign a viewing url for " + id, e);
+                return new ResponseEntity<>("Error while trying to sign a viewing url", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+        }
+        else {
+            return new ResponseEntity<>("Unauthorized", HttpStatus.UNAUTHORIZED);
+        }
+    }
 }
