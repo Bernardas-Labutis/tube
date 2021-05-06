@@ -1,6 +1,9 @@
 package lt.vu.tube.config;
 
 import lombok.AllArgsConstructor;
+import lt.vu.tube.jwt.JwtConfig;
+import lt.vu.tube.jwt.JwtTokenVerifier;
+import lt.vu.tube.jwt.JwtUsernameAndPasswordAuthenticationFilter;
 import lt.vu.tube.services.AppUserService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -9,10 +12,14 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
+import javax.crypto.SecretKey;
+
 import static org.springframework.security.config.Customizer.withDefaults;
+import static lt.vu.tube.enums.AppUserRole.*;
 
 @Configuration
 @AllArgsConstructor
@@ -22,25 +29,46 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
     private final AppUserService appUserService;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
+    private final SecretKey secretKey;
+    private final JwtConfig jwtConfig;
+
+//    @Override
+//    protected void configure(HttpSecurity http) throws Exception {
+//        http
+//                .cors(withDefaults())
+//                .csrf().disable()
+//                .authorizeRequests()
+//                .antMatchers("/api/v*/registration/**").permitAll()
+//                .antMatchers("/", "index", "/css/*", "/js/*").permitAll()
+//                .antMatchers("/**").permitAll()
+//                .anyRequest()
+//                .authenticated().and()
+//                .formLogin().defaultSuccessUrl("/videos")
+//                .and()
+//                .logout()
+//                .logoutUrl("/logout")
+//                .clearAuthentication(true)
+//                .invalidateHttpSession(true)
+//                .logoutSuccessUrl("/login");
+//    }
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http
                 .cors(withDefaults())
                 .csrf().disable()
-                .authorizeRequests()
-                .antMatchers("/api/v*/registration/**").permitAll()
-                .antMatchers("/", "index", "/css/*", "/js/*").permitAll()
-                .antMatchers("/**").permitAll()
-                .anyRequest()
-                .authenticated().and()
-                .formLogin().defaultSuccessUrl("/videos")
+                .sessionManagement()
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
-                .logout()
-                .logoutUrl("/logout")
-                .clearAuthentication(true)
-                .invalidateHttpSession(true)
-                .logoutSuccessUrl("/login");
+                .addFilter(new JwtUsernameAndPasswordAuthenticationFilter(authenticationManager(), jwtConfig, secretKey))
+                .addFilterAfter(new JwtTokenVerifier(secretKey, jwtConfig),JwtUsernameAndPasswordAuthenticationFilter.class)
+                .authorizeRequests()
+                .antMatchers("/", "index", "/css/*", "/js/*").permitAll()
+                .antMatchers("/api/v*/registration/**").permitAll()
+                .antMatchers("/login").permitAll()
+                //.antMatchers("/video/**").hasRole(USER.name())
+                .anyRequest()
+                .authenticated();
     }
 
     @Override
