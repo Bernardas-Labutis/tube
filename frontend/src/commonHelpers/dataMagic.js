@@ -1,24 +1,3 @@
-/*const tableData = JSON.parse(
-    `[{
-  "id": 0,
-  "key": 0,
-  "title": "PSK is cool",
-  "uploadTime": "2021-04-25 11:11",
-  "size": "25 MB"
-}, {
-  "id": 1,
-  "key": 1,
-  "title": "GMM is cool",
-  "uploadTime": "2021-04-20 09:22",
-  "size": "1000 MB"
-}, {
-  "id": 2,
-  "key": 2,
-  "title": "Life is cool",
-  "uploadTime": "2021-04-19 16:01",
-  "size": "3 MB"
-}]`,
-);*/
 const sortOption = {};
 class dataMagic {
     constructor(size, data) {

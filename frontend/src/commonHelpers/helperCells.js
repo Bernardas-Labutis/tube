@@ -88,4 +88,36 @@ class RestoreCell extends Component {
     }
 }
 
-export { DateCell, ImageCell, LinkCell, TextCell, EditableCell, DeleteCell, RestoreCell };
+class ShareCell extends Component {
+    render() {
+        const { index, onShareCell } = this.props;
+        return (
+            <Popconfirm
+                title="Sure to share?"
+                okText="SHARE"
+                cancelText="No"
+                onConfirm={() => onShareCell(index)}
+            >
+                <a>Share</a>
+            </Popconfirm>
+        );
+    }
+}
+
+class DownloadCell extends Component {
+    render() {
+        const { index, onDownloadCell } = this.props;
+        return (
+            <Popconfirm
+                title="Sure to download?"
+                okText="DOWNLOAD"
+                cancelText="No"
+                onConfirm={() => onDownloadCell(index)}
+            >
+                <a>Download</a>
+            </Popconfirm>
+        );
+    }
+}
+
+export { DateCell, ImageCell, LinkCell, TextCell, EditableCell, DeleteCell, RestoreCell, ShareCell, DownloadCell };

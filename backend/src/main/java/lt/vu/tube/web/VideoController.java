@@ -30,8 +30,6 @@ import javax.persistence.EntityManager;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -210,7 +208,13 @@ public class VideoController {
     public List<VideoDTO> getSoftDeleted() {
         return StreamSupport.stream(videoRepository.findAll().spliterator(), false)
                 .filter(video -> video.getStatus() == VideoStatusEnum.SOFT_DELETED)
-                .map(video -> new VideoDTO(video.getId().toString(), video.getId().toString(), video.getFileName(), video.getCreated(), video.getFileSize()))
+                .map(video -> new VideoDTO(
+                        video.getId().toString(),
+                        video.getId().toString(),
+                        video.getFileName(),
+                        video.getCreated(),
+                        video.getFileSize(),
+                        video.getPublic()))
                 .collect(Collectors.toList());
     }
 
@@ -245,13 +249,11 @@ public class VideoController {
             try {
                 String url = cloudFrontUtils.getSignedUrl(video.getPath(), Map.of("response-content-disposition", contentDisposition.toString()), 3600);
                 return new ResponseEntity<>(VideoDownloadResponse.success("Success", url), HttpStatus.OK);
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 logger.log(Level.SEVERE, "Error while trying to sign a download url for " + id, e);
                 return new ResponseEntity<>(VideoDownloadResponse.fail("Error while trying to sign a download url"), HttpStatus.INTERNAL_SERVER_ERROR);
             }
-        }
-        else {
+        } else {
             return new ResponseEntity<>(VideoDownloadResponse.fail("Unauthorized"), HttpStatus.UNAUTHORIZED);
         }
     }
@@ -305,6 +307,22 @@ public class VideoController {
                 }));
     }
 
+    @GetMapping("/allVideos")
+    @PreAuthorize("hasAuthority('user:read')")
+    public List<VideoDTO> getAllVideos() throws IOException {
+        return StreamSupport.stream(videoRepository.findAll().spliterator(), false)
+                .filter(video -> video.getStatus() == VideoStatusEnum.AVAILABLE
+                        /*&& video.getOwner().equals(AuthenticatedUser.getAuthenticatedUser())*/) //TODO: User
+                .map(video -> new VideoDTO(
+                        video.getId().toString(),
+                        video.getId().toString(),
+                        video.getFileName(),
+                        video.getCreated(),
+                        video.getFileSize(),
+                        video.getPublic()))
+                .collect(Collectors.toList());
+    }
+
     @RequestMapping("/viewingUrl/{id}")
     @PreAuthorize("hasAuthority('user:read')")
     public ResponseEntity<String> getVideoViewingUrl(@PathVariable UUID id) {
@@ -322,13 +340,11 @@ public class VideoController {
             try {
                 String url = cloudFrontUtils.getSignedUrl(video.getPath(), 3600);
                 return new ResponseEntity<>(url, HttpStatus.OK);
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 logger.log(Level.SEVERE, "Error while trying to sign a viewing url for " + id, e);
                 return new ResponseEntity<>("Error while trying to sign a viewing url", HttpStatus.INTERNAL_SERVER_ERROR);
             }
-        }
-        else {
+        } else {
             return new ResponseEntity<>("Unauthorized", HttpStatus.UNAUTHORIZED);
         }
     }
