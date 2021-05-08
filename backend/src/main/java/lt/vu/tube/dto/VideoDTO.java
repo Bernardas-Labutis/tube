@@ -16,14 +16,16 @@ public class VideoDTO {
     private String title;
     private String uploadTime;
     private String size;
+    private String privacy;
 
     private DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss ", Locale.ENGLISH);
 
-    public VideoDTO(String id, String key, String title, Timestamp uploadTime, Long size) {
+    public VideoDTO(String id, String key, String title, Timestamp uploadTime, Long size, boolean isPrivate) {
         this.id = id;
         this.key = key;
         this.title = title;
         this.uploadTime = uploadTime.toLocalDateTime().format(formatter);
         this.size = FileUtils.byteCountToDisplaySize(size);
+        this.privacy = isPrivate ? "Private" : "Public";
     }
 }

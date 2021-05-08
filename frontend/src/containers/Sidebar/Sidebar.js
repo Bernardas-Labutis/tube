@@ -158,17 +158,6 @@ class Sidebar extends Component {
                 </Link>
               </Menu.Item>
 
-              <Menu.Item key={"storage"}>
-                <Link to={`${url}/storage`}>
-                  <span className="isoMenuHolder" style={submenuColor}>
-                    <i className="ion-usb" />
-                    <span className="nav-text">
-                      Storage
-                    </span>
-                  </span>
-                </Link>
-              </Menu.Item>
-
               <Menu.Item key={"trashcan"}>
                 <Link to={`${url}/trashcan`}>
                   <span className="isoMenuHolder" style={submenuColor}>

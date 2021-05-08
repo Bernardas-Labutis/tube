@@ -8,7 +8,7 @@ import {
 } from "../../commonHelpers/helperCells";
 import { tableinfos } from "./configs";
 import axios from "axios";
-import dataMagic from "./dataMagic";
+import dataMagic from "../../commonHelpers/dataMagic";
 import "react-modal-video/css/modal-video.min.css";
 import ModalVideo from "react-modal-video";
 
@@ -121,10 +121,10 @@ export default class Trashcan extends Component {
 					<TableWrapper
 						columns={columns}
 						dataSource={dataList}
-						onRowClick={(video) => {
+						/*onRowClick={(video) => {
 							this.getVideoUrl(video.id);
 							this.openModal();
-						}}
+						}}*/
 						className="isoEditableTable"
 					/>
 					<ModalVideo
