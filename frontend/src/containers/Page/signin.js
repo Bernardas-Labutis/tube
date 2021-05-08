@@ -16,6 +16,8 @@ const { login } = authAction;
 class SignIn extends Component {
   state = {
     redirectToReferrer: false,
+    username: '',
+    password: ''
   };
   componentWillReceiveProps(nextProps) {
     if (
@@ -27,8 +29,9 @@ class SignIn extends Component {
   }
   handleLogin = () => {
     const { login } = this.props;
-    login();
-    this.props.history.push('/dashboard');
+    login(this.state.username, this.state.password);
+    this.props.history.push('/dashboard');//TODO need to check somehow if has token from local storage and push dashboard or signin
+    
   };
   render() {
     const from = { pathname: '/dashboard' };
@@ -49,11 +52,11 @@ class SignIn extends Component {
 
             <div className="isoSignInForm">
               <div className="isoInputWrapper">
-                <Input size="large" placeholder="Username" />
+                <Input size="large" placeholder="Username" value={this.state.username} onChange={evt => this.setState({username: evt.target.value})}/>
               </div>
 
               <div className="isoInputWrapper">
-                <Input size="large" type="password" placeholder="Password" />
+                <Input value={this.state.password} size="large" type="password" placeholder="Password" onChange={evt => this.setState({password: evt.target.value})}/>
               </div>
 
               <div className="isoInputWrapper isoLeftRightComponent">

@@ -6,6 +6,7 @@ import { connect } from 'react-redux';
 import App from './containers/App/App';
 import asyncComponent from './helpers/AsyncFunc';
 import Auth0 from './helpers/auth0';
+import axios from 'axios';
 
 const RestrictedRoute = ({ component: Component, isLoggedIn, ...rest }) => (
   <Route
@@ -87,5 +88,18 @@ const PublicRoutes = ({ history, isLoggedIn }) => {
 };
 
 export default connect(state => ({
+  
   isLoggedIn: state.Auth.get('idToken') !== null,
 }))(PublicRoutes);
+
+(function() {
+  var token = localStorage.getItem['id_token'];
+  if (token) {
+      axios.defaults.headers.common['Authorization'] = token;
+  } else {
+      axios.defaults.headers.common['Authorization'] = null;
+      /*if setting null does not remove `Authorization` header then try     
+        delete axios.defaults.headers.common['Authorization'];
+      */
+  }
+})();

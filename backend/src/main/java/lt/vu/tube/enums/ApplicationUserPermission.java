@@ -1,8 +1,7 @@
 package lt.vu.tube.enums;
 
 public enum ApplicationUserPermission {
-    USER_READ("user:read"),
-    USER_WRITE("user:write");
+    USER_GENERAL("user:general");
 
     private final String permission;
 

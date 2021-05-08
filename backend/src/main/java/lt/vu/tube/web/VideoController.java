@@ -57,8 +57,8 @@ public class VideoController {
     private AppUserRepository appUserRepository;
 
     @RequestMapping(value = "/upload")
-    //@PreAuthorize("hasAnyRole('ROLE_ADMIN')")
-    @PreAuthorize("hasAuthority('user:read')")
+    @PreAuthorize("hasAnyRole('ROLE_USER')")
+    //@PreAuthorize("hasAuthority('user:read')")
     public VideoUploadResponse uploadVideo(HttpServletRequest request) throws Exception {
         boolean isMultipart = ServletFileUpload.isMultipartContent(request);
         if (!isMultipart) {
@@ -179,8 +179,8 @@ public class VideoController {
         }
     }
 
-    //TODO user permissions?
     @DeleteMapping(value = "/{id}")
+    @PreAuthorize("hasAnyRole('ROLE_USER')")
     public ResponseEntity<UUID> hardDeleteVideo(@PathVariable UUID id) {
         Optional<Video> video = videoRepository.findById(id);
         if (video.isEmpty()) {
@@ -194,6 +194,7 @@ public class VideoController {
     }
 
     @GetMapping(value = "/soft-delete/{id}")
+    @PreAuthorize("hasAnyRole('ROLE_USER')")
     public ResponseEntity<UUID> softDeleteVideo(@PathVariable UUID id) {
         Optional<Video> video = videoRepository.findById(id);
         if (video.isEmpty()) {
@@ -205,6 +206,7 @@ public class VideoController {
     }
 
     @GetMapping(value = "/soft-deleted")
+    @PreAuthorize("hasAnyRole('ROLE_USER')")
     public List<VideoDTO> getSoftDeleted() {
         return StreamSupport.stream(videoRepository.findAll().spliterator(), false)
                 .filter(video -> video.getStatus() == VideoStatusEnum.SOFT_DELETED)
@@ -219,6 +221,7 @@ public class VideoController {
     }
 
     @GetMapping(value = "/recover/{id}")
+    @PreAuthorize("hasAnyRole('ROLE_USER')")
     public ResponseEntity<UUID> recoverVideo(@PathVariable UUID id) {
         Optional<Video> video = videoRepository.findById(id);
         if (video.isEmpty()) {
@@ -230,6 +233,7 @@ public class VideoController {
     }
 
     @GetMapping(value = "/download/{id}")
+    @PreAuthorize("hasAnyRole('ROLE_USER')")
     public ResponseEntity<VideoDownloadResponse> downloadVideo(@PathVariable UUID id) {
         Optional<Video> optionalVideo = videoRepository.findById(id);
         if (optionalVideo.isEmpty()) {
@@ -260,8 +264,8 @@ public class VideoController {
 
     //Temporary delete later
     @RequestMapping("")
-    //@PreAuthorize("hasAnyRole('ROLE_ADMIN')")
-    @PreAuthorize("hasAuthority('user:read')")
+    @PreAuthorize("hasAnyRole('ROLE_USER')")
+    //@PreAuthorize("hasAuthority('user:read')")
     public String uploadVideo() throws IOException {
         //Delete the resoource too
         return Streams.asString(getClass().getClassLoader().getResourceAsStream("video.html"));
@@ -269,22 +273,23 @@ public class VideoController {
 
     //Temporary delete later
     @RequestMapping("/type")
+    @PreAuthorize("hasAnyRole('ROLE_USER')")
     public LambdaResponse<MediaTypeResponseBody> getData(@RequestParam String key) throws Exception {
         return lambdaUtils.getMediaType(key);
     }
 
     //Temporary delete later
     @RequestMapping("/videos")
-    //@PreAuthorize("hasAnyRole('ROLE_ADMIN')")
-    @PreAuthorize("hasAuthority('user:read')")
+    @PreAuthorize("hasAnyRole('ROLE_USER')")
+    //@PreAuthorize("hasAuthority('user:read')")
     public List<Video> getVideos() throws IOException {
         return StreamSupport.stream(videoRepository.findAll().spliterator(), false).collect(Collectors.toList());
     }
 
     //Temporary delete later
     @RequestMapping("/videos/{id}")
-    //@PreAuthorize("hasAnyRole('ROLE_ADMIN')")
-    @PreAuthorize("hasAuthority('user:read')")
+    @PreAuthorize("hasAnyRole('ROLE_USER')")
+    //@PreAuthorize("hasAuthority('user:read')")
     public List<Video> getVideos(@PathVariable Long id) throws IOException {
         //Galima naudot appUserRepository.get(id) tada bus tik reference
         //Bet tada negalima tiesiog video paverst į json, nes owner būna tik reference kas nesiverčia į json
@@ -293,8 +298,8 @@ public class VideoController {
 
     //Temporary delete later
     @RequestMapping("/videoLinks")
-    //@PreAuthorize("hasAnyRole('ROLE_ADMIN')")
-    @PreAuthorize("hasAuthority('user:read')")
+    @PreAuthorize("hasAnyRole('ROLE_USER')")
+    //@PreAuthorize("hasAuthority('user:read')")
     public Map<UUID, String> getVideoLinks() throws IOException {
         return StreamSupport.stream(videoRepository.findAll().spliterator(), false)
                 .collect(Collectors.toMap(Video::getId, v -> {

@@ -9,8 +9,8 @@ import java.util.stream.Collectors;
 import static lt.vu.tube.enums.ApplicationUserPermission.*;
 
 public enum AppUserRole {
-    USER(Sets.newHashSet(USER_READ, USER_WRITE)),
-    ADMIN(Sets.newHashSet(USER_READ, USER_WRITE));
+    USER(Sets.newHashSet(USER_GENERAL)),
+    ADMIN(Sets.newHashSet(USER_GENERAL));
 
     private final Set<ApplicationUserPermission> permissions;
 
