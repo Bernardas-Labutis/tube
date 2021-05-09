@@ -1,8 +1,11 @@
 package lt.vu.tube.interceptor;
 
+import lt.vu.tube.entity.AppUser;
 import lt.vu.tube.entity.UserActivityLog;
 import lt.vu.tube.repository.UserActivityLogRepository;
+import lt.vu.tube.services.AuthenticatedUser;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Component;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
@@ -12,6 +15,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.sql.Timestamp;
 import java.util.Enumeration;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 @Component
 public class UserActivityLogInterceptor implements HandlerInterceptor {
@@ -34,11 +38,23 @@ public class UserActivityLogInterceptor implements HandlerInterceptor {
             HandlerMethod handlerMethod = (HandlerMethod) handler;
             String methodName = handlerMethod.getMethod().getName();
             String className = handlerMethod.getBean().getClass().getSimpleName();
+            AppUser appUser = AuthenticatedUser.getAuthenticatedUser();
+            String username = null;
+            String permissions = null;
+            if(appUser!=null){
+                username = appUser.getUsername();
+                permissions = appUser.getAuthorities().stream()
+                        .map(GrantedAuthority::getAuthority)
+                        .collect(Collectors.joining(", "));
+
+            }
+            if(username.equals("username")){
+                System.out.println("haha");
+            }
             userActivityLogRepository.save(
-                    //TODO get user and talk about permissions
                     new UserActivityLog(
-                            "user",
-                            "permission",
+                            username,
+                            permissions,
                             new Timestamp(System.currentTimeMillis()),
                             className + "." + methodName
                     )
