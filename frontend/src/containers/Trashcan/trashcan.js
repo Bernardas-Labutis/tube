@@ -12,22 +12,6 @@ import dataMagic from "../../commonHelpers/dataMagic";
 import "react-modal-video/css/modal-video.min.css";
 import ModalVideo from "react-modal-video";
 
-(function() {
-    var token = "something";
-    var token = localStorage.id_token;
-    var len = localStorage.id_token;
-    console.log(len);
-    if (token) {
-        axios.defaults.headers.common['Authorization'] = token;
-        console.log("1" + token);
-    } else {
-        axios.defaults.headers.common['Authorization'] = null;
-        console.log("2" + token);
-        /*if setting null does not remove `Authorization` header then try     
-          delete axios.defaults.headers.common['Authorization'];
-        */
-    }
-  })();
 
 export default class Trashcan extends Component {
 	constructor(props) {
