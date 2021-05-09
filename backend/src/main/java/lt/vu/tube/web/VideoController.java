@@ -2,6 +2,7 @@ package lt.vu.tube.web;
 
 import lt.vu.tube.config.VideoConfig;
 import lt.vu.tube.dto.VideoDTO;
+import lt.vu.tube.entity.AppUser;
 import lt.vu.tube.entity.Video;
 import lt.vu.tube.enums.VideoStatusEnum;
 import lt.vu.tube.model.LambdaResponse;
@@ -55,6 +56,8 @@ public class VideoController {
     private AWSLambdaUtils lambdaUtils;
     @Autowired
     private AppUserRepository appUserRepository;
+    @Autowired
+    AuthenticatedUser authenticatedUser;
 
     @RequestMapping(value = "/upload")
     @PreAuthorize("hasAnyRole('ROLE_USER')")
@@ -105,7 +108,7 @@ public class VideoController {
                 //Create video object to get the path we're going to use
                 video = new Video();
                 video.setFileName(fileName);
-                video.setOwner(AuthenticatedUser.getAuthenticatedUser());
+                video.setOwner(authenticatedUser.getAuthenticatedUser());
                 video = videoRepository.save(video);
 
                 //Start upload
@@ -208,6 +211,7 @@ public class VideoController {
     @GetMapping(value = "/soft-deleted")
     @PreAuthorize("hasAnyRole('ROLE_USER')")
     public List<VideoDTO> getSoftDeleted() {
+        AppUser user = authenticatedUser.getAuthenticatedUser();
         return StreamSupport.stream(videoRepository.findAll().spliterator(), false)
                 .filter(video -> video.getStatus() == VideoStatusEnum.SOFT_DELETED)
                 .map(video -> new VideoDTO(
@@ -242,7 +246,7 @@ public class VideoController {
         Video video = optionalVideo.get();
         //Only allow to download your own videos
         //Could be change to allow public videos to be downloaded by anyone
-        if (video.getOwner() == null || video.getOwner().equals(AuthenticatedUser.getAuthenticatedUser())) {
+        if (video.getOwner() == null || video.getOwner().equals(authenticatedUser.getAuthenticatedUser())) {
             if (video.getStatus() != VideoStatusEnum.AVAILABLE && video.getStatus() != VideoStatusEnum.SOFT_DELETED) {
                 return new ResponseEntity<>(VideoDownloadResponse.fail("Video is not available for download"), HttpStatus.BAD_REQUEST);
             }
@@ -337,7 +341,7 @@ public class VideoController {
         }
         Video video = optionalVideo.get();
         //Allow to view unowned, your own and public videos
-        if (video.getOwner() == null || video.getOwner().equals(AuthenticatedUser.getAuthenticatedUser()) || video.getPublic()) {
+        if (video.getOwner() == null || video.getOwner().equals(authenticatedUser.getAuthenticatedUser()) || video.getPublic()) {
             if (video.getStatus() != VideoStatusEnum.AVAILABLE && video.getStatus() != VideoStatusEnum.SOFT_DELETED) {
                 return new ResponseEntity<>("Video url not available", HttpStatus.BAD_REQUEST);
             }
