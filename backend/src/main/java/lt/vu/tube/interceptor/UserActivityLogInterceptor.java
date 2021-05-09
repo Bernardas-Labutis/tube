@@ -46,7 +46,6 @@ public class UserActivityLogInterceptor implements HandlerInterceptor {
                 permissions = appUser.getAuthorities().stream()
                         .map(GrantedAuthority::getAuthority)
                         .collect(Collectors.joining(", "));
-
             }
             if(username.equals("username")){
                 System.out.println("haha");
