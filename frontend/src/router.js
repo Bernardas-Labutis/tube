@@ -93,9 +93,7 @@ export default connect(state => ({
 }))(PublicRoutes);
 
 (function() {
-  var token = "something";
   var token = localStorage.id_token;
-  console.log(token);
   if (token) {
       axios.defaults.headers.common['Authorization'] = token;
   } else {
