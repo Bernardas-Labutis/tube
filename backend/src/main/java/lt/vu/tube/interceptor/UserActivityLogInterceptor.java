@@ -47,9 +47,6 @@ public class UserActivityLogInterceptor implements HandlerInterceptor {
                         .map(GrantedAuthority::getAuthority)
                         .collect(Collectors.joining(", "));
             }
-            if(username.equals("username")){
-                System.out.println("haha");
-            }
             userActivityLogRepository.save(
                     new UserActivityLog(
                             username,
