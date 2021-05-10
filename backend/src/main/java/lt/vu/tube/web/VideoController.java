@@ -2,12 +2,12 @@ package lt.vu.tube.web;
 
 import lt.vu.tube.config.VideoConfig;
 import lt.vu.tube.dto.VideoDTO;
-import lt.vu.tube.entity.AppUser;
 import lt.vu.tube.entity.Video;
 import lt.vu.tube.enums.VideoStatusEnum;
 import lt.vu.tube.model.LambdaResponse;
 import lt.vu.tube.model.MediaTypeResponseBody;
 import lt.vu.tube.repository.AppUserRepository;
+import lt.vu.tube.repository.CurrentUserVideoDAO;
 import lt.vu.tube.repository.VideoRepository;
 import lt.vu.tube.response.VideoDownloadResponse;
 import lt.vu.tube.response.VideoUploadResponse;
@@ -58,6 +58,8 @@ public class VideoController {
     private AppUserRepository appUserRepository;
     @Autowired
     AuthenticatedUser authenticatedUser;
+    @Autowired
+    CurrentUserVideoDAO currentUserVideoDAO;
 
     @RequestMapping(value = "/upload")
     @PreAuthorize("hasAnyRole('ROLE_USER')")
@@ -211,8 +213,7 @@ public class VideoController {
     @GetMapping(value = "/soft-deleted")
     @PreAuthorize("hasAnyRole('ROLE_USER')")
     public List<VideoDTO> getSoftDeleted() {
-        AppUser user = authenticatedUser.getAuthenticatedUser();
-        return StreamSupport.stream(videoRepository.findAll().spliterator(), false)
+        return StreamSupport.stream(currentUserVideoDAO.getCurrentUserSoftDeletedVideos().spliterator(), false)
                 .filter(video -> video.getStatus() == VideoStatusEnum.SOFT_DELETED)
                 .map(video -> new VideoDTO(
                         video.getId().toString(),
@@ -269,7 +270,6 @@ public class VideoController {
     //Temporary delete later
     @RequestMapping("")
     @PreAuthorize("hasAnyRole('ROLE_USER')")
-    //@PreAuthorize("hasAuthority('user:read')")
     public String uploadVideo() throws IOException {
         //Delete the resoource too
         return Streams.asString(getClass().getClassLoader().getResourceAsStream("video.html"));
@@ -285,7 +285,6 @@ public class VideoController {
     //Temporary delete later
     @RequestMapping("/videos")
     @PreAuthorize("hasAnyRole('ROLE_USER')")
-    //@PreAuthorize("hasAuthority('user:read')")
     public List<Video> getVideos() throws IOException {
         return StreamSupport.stream(videoRepository.findAll().spliterator(), false).collect(Collectors.toList());
     }
@@ -293,7 +292,6 @@ public class VideoController {
     //Temporary delete later
     @RequestMapping("/videos/{id}")
     @PreAuthorize("hasAnyRole('ROLE_USER')")
-    //@PreAuthorize("hasAuthority('user:read')")
     public List<Video> getVideos(@PathVariable Long id) throws IOException {
         //Galima naudot appUserRepository.get(id) tada bus tik reference
         //Bet tada negalima tiesiog video paverst į json, nes owner būna tik reference kas nesiverčia į json
@@ -303,7 +301,6 @@ public class VideoController {
     //Temporary delete later
     @RequestMapping("/videoLinks")
     @PreAuthorize("hasAnyRole('ROLE_USER')")
-    //@PreAuthorize("hasAuthority('user:read')")
     public Map<UUID, String> getVideoLinks() throws IOException {
         return StreamSupport.stream(videoRepository.findAll().spliterator(), false)
                 .collect(Collectors.toMap(Video::getId, v -> {
@@ -316,12 +313,10 @@ public class VideoController {
                 }));
     }
 
-    @GetMapping("/allVideos")
+    @GetMapping("/userAvailable")
     @PreAuthorize("hasAuthority('user:read')")
-    public List<VideoDTO> getAllVideos() throws IOException {
-        return StreamSupport.stream(videoRepository.findAll().spliterator(), false)
-                .filter(video -> video.getStatus() == VideoStatusEnum.AVAILABLE
-                        /*&& video.getOwner().equals(AuthenticatedUser.getAuthenticatedUser())*/) //TODO: User
+    public List<VideoDTO> getAllCurrentUserAvailableVideos() throws IOException {
+        return StreamSupport.stream(currentUserVideoDAO.getCurrentUserAvailableVideos().spliterator(), false)
                 .map(video -> new VideoDTO(
                         video.getId().toString(),
                         video.getId().toString(),
