@@ -21,15 +21,17 @@ import java.util.stream.Collectors;
 public class UserActivityLogInterceptor implements HandlerInterceptor {
     private static final Logger logger = Logger.getLogger(UserActivityLogInterceptor.class.getSimpleName());
 
-
     private UserActivityLogRepository userActivityLogRepository;
+
+    private AuthenticatedUser authenticatedUser;
 
     public UserActivityLogInterceptor() {
     }
 
     @Autowired
-    public UserActivityLogInterceptor(UserActivityLogRepository userActivityLogRepository) {
+    public UserActivityLogInterceptor(UserActivityLogRepository userActivityLogRepository, AuthenticatedUser authenticatedUser) {
         this.userActivityLogRepository = userActivityLogRepository;
+        this.authenticatedUser = authenticatedUser;
     }
 
     @Override
@@ -38,7 +40,7 @@ public class UserActivityLogInterceptor implements HandlerInterceptor {
             HandlerMethod handlerMethod = (HandlerMethod) handler;
             String methodName = handlerMethod.getMethod().getName();
             String className = handlerMethod.getBean().getClass().getSimpleName();
-            AppUser appUser = AuthenticatedUser.getAuthenticatedUser();
+            AppUser appUser = authenticatedUser.getAuthenticatedUser();
             String username = null;
             String permissions = null;
             if(appUser!=null){
