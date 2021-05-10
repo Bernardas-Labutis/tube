@@ -62,21 +62,22 @@ public class VideoController {
     @RequestMapping(value = "/upload")
     @PreAuthorize("hasAnyRole('ROLE_USER')")
     //@PreAuthorize("hasAuthority('user:read')")
-    public VideoUploadResponse uploadVideo(HttpServletRequest request) throws Exception {
+    public ResponseEntity<VideoUploadResponse> uploadVideo(HttpServletRequest request) throws Exception {
         boolean isMultipart = ServletFileUpload.isMultipartContent(request);
         if (!isMultipart) {
-            return VideoUploadResponse.fail("Request must be multipart");
+            return new ResponseEntity<>(VideoUploadResponse.fail("Request must be multipart"), HttpStatus.BAD_REQUEST);
         }
         Set<String> neededParams = new HashSet<>(Set.of("fileName", "fileSize", "file"));
 
 
         String fileName = "";
-        int reportedFileSize;
+        Long reportedFileSize = 0L;
 
         Video video = null;
 
         ServletFileUpload upload = new ServletFileUpload();
         FileItemIterator iterStream = upload.getItemIterator(request);
+        AppUser user = authenticatedUser.getAuthenticatedUser();
         //Getting multipart request parts
         while (iterStream.hasNext()) {
             FileItemStream item = iterStream.next();
@@ -91,7 +92,7 @@ public class VideoController {
                             fileName = value;
                             break;
                         case "fileSize":
-                            reportedFileSize = Integer.parseInt(value);
+                            reportedFileSize = Long.parseLong(value);
                             break;
                     }
                 }
@@ -99,16 +100,17 @@ public class VideoController {
                 if (neededParams.size() == 1) {
                     neededParams.remove(item.getFieldName());
                 } else {
-                    return VideoUploadResponse.fail("There are missing parameters or they are in wrong order");
+                    return new ResponseEntity<>(VideoUploadResponse.fail("There are missing parameters or they are in wrong order"), HttpStatus.BAD_REQUEST);
                 }
-                //TODO: add checks for file size when user is created
+                if (user.getMaxStorage() < user.getUsedStorage() + reportedFileSize) {
+                    return new ResponseEntity<>(VideoUploadResponse.fail("Not enough space in storage"), HttpStatus.FORBIDDEN);
+                }
 
                 //No transaction because the operation is long and we might need to check the status midway from a different call
-
                 //Create video object to get the path we're going to use
                 video = new Video();
                 video.setFileName(fileName);
-                video.setOwner(authenticatedUser.getAuthenticatedUser());
+                video.setOwner(user);
                 video = videoRepository.save(video);
 
                 //Start upload
@@ -125,6 +127,14 @@ public class VideoController {
                         bytes = stream.readNBytes(1024 * 1024 * 10);
                         if (bytes.length != 0) {
                             fileLength += bytes.length;
+                            if (user.getMaxStorage() < user.getUsedStorage() + fileLength) {
+                                s3Utils.abortMultipartUpload(response.uploadId());
+                                video.setStatus(VideoStatusEnum.UPLOAD_FAILED);
+                                video = videoRepository.save(video);
+                                logger.log(Level.INFO, String.format("Failed to upload video, reported filesize didn't match the real one and user didn't have enoug space. (reported: %d)", reportedFileSize));
+                                return new ResponseEntity<>(VideoUploadResponse.fail("Not enough space in storage"), HttpStatus.FORBIDDEN);
+
+                            }
                             s3Utils.uploadPart(response.uploadId(), bytes);
                         }
                     } while (bytes.length != 0);
@@ -141,7 +151,7 @@ public class VideoController {
                         s3Utils.deleteFile(video.getPath());
                         video.setStatus(VideoStatusEnum.INVALID);
                         video = videoRepository.save(video);
-                        return VideoUploadResponse.fail("Failed to process the video");
+                        return new ResponseEntity<>(VideoUploadResponse.fail("Failed to process the video"), HttpStatus.INTERNAL_SERVER_ERROR);
                     }
 
                     if (mediaTypeResponse.getBody().getStatus().equals("success")) {
@@ -154,14 +164,14 @@ public class VideoController {
                             s3Utils.deleteFile(video.getPath());
                             video.setStatus(VideoStatusEnum.INVALID);
                             video = videoRepository.save(video);
-                            return VideoUploadResponse.fail("Invalid video file type");
+                            return new ResponseEntity<>(VideoUploadResponse.fail("Invalid video file type"), HttpStatus.BAD_REQUEST);
                         }
                     } else {
                         logger.log(Level.SEVERE, "getMediaType failed with error message: " + mediaTypeResponse.getBody().getMessage());
                         s3Utils.deleteFile(video.getPath());
                         video.setStatus(VideoStatusEnum.INVALID);
                         video = videoRepository.save(video);
-                        return VideoUploadResponse.fail("Failed to process the video");
+                        return new ResponseEntity<>(VideoUploadResponse.fail("Failed to process the video"), HttpStatus.INTERNAL_SERVER_ERROR);
                     }
 
                 } catch (AwsServiceException exception) {
@@ -170,15 +180,15 @@ public class VideoController {
                     video.setStatus(VideoStatusEnum.UPLOAD_FAILED);
                     video = videoRepository.save(video);
                     logger.log(Level.SEVERE, "Failed to upload: " + exception.getMessage(), exception);
-                    return VideoUploadResponse.fail("Failed to store the video");
+                    return new ResponseEntity<>(VideoUploadResponse.fail("Failed to store the video"), HttpStatus.INTERNAL_SERVER_ERROR);
                 }
                 logger.info("Video uploaded: " + cloudFrontUtils.getSignedUrl(video.getPath(), 3600));
             }
         }
         if (!neededParams.isEmpty()) {
-            return VideoUploadResponse.fail("There are missing parameters");
+            return new ResponseEntity<>(VideoUploadResponse.fail("There are missing parameters"), HttpStatus.BAD_REQUEST);
         } else {
-            return VideoUploadResponse.success("success", video.getId());
+            return new ResponseEntity<>(VideoUploadResponse.success("success", video.getId()), HttpStatus.OK);
         }
     }
 
@@ -287,7 +297,13 @@ public class VideoController {
     @PreAuthorize("hasAnyRole('ROLE_USER')")
     //@PreAuthorize("hasAuthority('user:read')")
     public List<Video> getVideos() throws IOException {
-        return StreamSupport.stream(videoRepository.findAll().spliterator(), false).collect(Collectors.toList());
+        return StreamSupport.stream(videoRepository.findAll().spliterator(), false).map(video -> {
+            if (video.getOwner() != null) {
+                video.getOwner().setVideos(null);
+                //Preventing a recursion explosion
+            }
+            return video;
+        }).collect(Collectors.toList());
     }
 
     //Temporary delete later
