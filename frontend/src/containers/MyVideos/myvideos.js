@@ -35,7 +35,7 @@ export default class MyVideos extends Component {
 	getData() {
 		let data = [];
 		axios
-			.get("http://localhost:8080/video/allVideos", {})
+			.get("http://localhost:8080/video/userAvailable", {})
 			.then((response) => {
 				console.log(response);
 				data = response.data;
