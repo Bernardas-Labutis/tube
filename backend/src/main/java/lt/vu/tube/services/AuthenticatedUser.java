@@ -18,8 +18,6 @@ public class AuthenticatedUser {
 
     public AppUser getAuthenticatedUser() {
         Object email = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        appUserRepository.findByEmail(((String)email));
-
         if (email instanceof String) {
             return appUserRepository.findByEmail(((String)email))
                     .orElseThrow(() ->
