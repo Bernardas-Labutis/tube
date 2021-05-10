@@ -70,8 +70,6 @@ public class AWSCloudFrontUtils {
         }
         //Signature is a policy json with no white spaces encrypted with SHA1 RSA and BASE64
         String signature = buildSignatureJson(baseUrl, expirationDate);
-        System.out.println("New: " + signature);
-        System.out.println("Old: " + String.format("{\"Statement\":[{\"Resource\":\"%s\",\"Condition\":{\"DateLessThan\":{\"AWS:EpochTime\":%d}}}]}", baseUrl, expirationDate));
         //Replace url unsafe chars
         signature = Base64Utils.encodeToString(signString(signature)).replace("+", "-").replace("=", "_").replace("/", "~");
         return String.format("%s%sExpires=%d&Signature=%s&Key-Pair-Id=%s", baseUrl, params == null ? '?' : '&', expirationDate, signature, awsConfig.getPublicKeyId());
