@@ -12,6 +12,7 @@ import dataMagic from "../../commonHelpers/dataMagic";
 import "react-modal-video/css/modal-video.min.css";
 import ModalVideo from "react-modal-video";
 
+
 export default class Trashcan extends Component {
 	constructor(props) {
 		super(props);

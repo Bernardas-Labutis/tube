@@ -19,9 +19,13 @@ public class HelloController {
     @Autowired
     EntityManager entityManager;
 
+    @Autowired
+    AuthenticatedUser authenticatedUser;
+
     @RequestMapping("/")
     public String index() {
-        AppUser user = AuthenticatedUser.getAuthenticatedUser();
+        AppUser user = authenticatedUser.getAuthenticatedUser();
+        System.out.println(user);
         String username = "Anonymous Person";
         if (user != null) {
             username = user.getUsername();
