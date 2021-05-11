@@ -2,6 +2,7 @@ package lt.vu.tube.web;
 
 import lt.vu.tube.config.VideoConfig;
 import lt.vu.tube.dto.VideoDTO;
+import lt.vu.tube.entity.AppUser;
 import lt.vu.tube.entity.Video;
 import lt.vu.tube.enums.VideoStatusEnum;
 import lt.vu.tube.model.LambdaResponse;
@@ -10,6 +11,7 @@ import lt.vu.tube.repository.AppUserRepository;
 import lt.vu.tube.repository.CurrentUserVideoDAO;
 import lt.vu.tube.repository.VideoRepository;
 import lt.vu.tube.response.VideoDownloadResponse;
+import lt.vu.tube.response.VideoStorageResponse;
 import lt.vu.tube.response.VideoUploadResponse;
 import lt.vu.tube.services.AuthenticatedUser;
 import lt.vu.tube.util.AWSCloudFrontUtils;
@@ -366,6 +368,17 @@ public class VideoController {
             }
         } else {
             return new ResponseEntity<>("Unauthorized", HttpStatus.UNAUTHORIZED);
+        }
+    }
+
+    @RequestMapping("/userStorage")
+    @PreAuthorize("hasAuthority('user:read')")
+    public ResponseEntity<VideoStorageResponse> getCurrentUserUsedBytes(){
+        AppUser currentUser = authenticatedUser.getAuthenticatedUser();
+        if (currentUser==null){
+            return new ResponseEntity<>(new VideoStorageResponse(), HttpStatus.UNAUTHORIZED);
+        } else{
+            return new ResponseEntity<>(new VideoStorageResponse(currentUser.getUsedStorage(), currentUser.getMaxStorage()), HttpStatus.OK);
         }
     }
 }

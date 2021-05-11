@@ -12,6 +12,10 @@ import axios from "axios";
 import dataMagic from "../../commonHelpers/dataMagic";
 import "react-modal-video/css/modal-video.min.css";
 import ModalVideo from "react-modal-video";
+import PageHeader from "../../components/utility/pageHeader";
+import LayoutWrapper from "../../components/utility/layoutWrapper";
+import { Row, Col } from "antd";
+import basicStyle from "../../config/basicStyle";
 
 export default class MyVideos extends Component {
 	constructor(props) {
@@ -137,28 +141,32 @@ export default class MyVideos extends Component {
 	};
 	render() {
 		const { columns, dataList } = this.state;
-
+		const { rowStyle, colStyle, gutter } = basicStyle;
 		return (
-			<div>
-				<h2>My videos</h2>
-				<React.Fragment>
-					<TableWrapper
-						columns={columns}
-						dataSource={dataList}
-						onRowClick={(video) => {
-							this.getVideoUrl(video.id);
-							this.openModal();
-						}}
-						className="isoEditableTable"
-					/>
-					<ModalVideo
-						channel="custom"
-						isOpen={this.state.isOpen}
-						url={this.state.videoUrl}
-						onClose={() => this.setState({ isOpen: false })}
-					/>
-				</React.Fragment>
-			</div>
+			<LayoutWrapper>
+				<PageHeader>My Videos</PageHeader>
+				<Row style={rowStyle} gutter={gutter} justify="start">
+					<Col md={24} sm={24} xs={24} style={colStyle}>
+						<React.Fragment>
+							<TableWrapper
+								columns={columns}
+								dataSource={dataList}
+								onRowClick={(video) => {
+									this.getVideoUrl(video.id);
+									this.openModal();
+								}}
+								className="isoEditableTable"
+							/>
+							<ModalVideo
+								channel="custom"
+								isOpen={this.state.isOpen}
+								url={this.state.videoUrl}
+								onClose={() => this.setState({ isOpen: false })}
+							/>
+						</React.Fragment>
+					</Col>
+				</Row>
+			</LayoutWrapper>
 		);
 	}
 }
