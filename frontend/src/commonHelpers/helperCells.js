@@ -38,30 +38,32 @@ class EditableCell extends Component {
 	render() {
 		const { value, editable } = this.state;
 		return (
-			<div className="isoEditData">
-				{editable ? (
-					<div className="isoEditDataWrapper">
-						<Input
-							value={value}
-							onChange={this.handleChange}
-							onPressEnter={this.check}
-						/>
-						<Icon
-							type="check"
-							className="isoEditIcon"
-							onClick={this.check}
-						/>
-					</div>
-				) : (
-					<p className="isoDataWrapper">
-						{value || " "}
-						<Icon
-							type="edit"
-							className="isoEditIcon"
-							onClick={this.edit}
-						/>
-					</p>
-				)}
+			<div onClick={(e) => e.stopPropagation()}>
+				<div className="isoEditData">
+					{editable ? (
+						<div className="isoEditDataWrapper">
+							<Input
+								value={value}
+								onChange={this.handleChange}
+								onPressEnter={this.check}
+							/>
+							<Icon
+								type="check"
+								className="isoEditIcon"
+								onClick={this.check}
+							/>
+						</div>
+					) : (
+						<p className="isoDataWrapper">
+							{value || " "}
+							<Icon
+								type="edit"
+								className="isoEditIcon"
+								onClick={this.edit}
+							/>
+						</p>
+					)}
+				</div>
 			</div>
 		);
 	}

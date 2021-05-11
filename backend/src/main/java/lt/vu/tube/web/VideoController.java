@@ -15,6 +15,9 @@ import lt.vu.tube.services.AuthenticatedUser;
 import lt.vu.tube.util.AWSCloudFrontUtils;
 import lt.vu.tube.util.AWSLambdaUtils;
 import lt.vu.tube.util.AWSS3Utils;
+import org.apache.tika.mime.MimeType;
+import org.apache.tika.mime.MimeTypeException;
+import org.apache.tika.mime.MimeTypes;
 import org.apache.tomcat.util.http.fileupload.FileItemIterator;
 import org.apache.tomcat.util.http.fileupload.FileItemStream;
 import org.apache.tomcat.util.http.fileupload.servlet.ServletFileUpload;
@@ -251,9 +254,19 @@ public class VideoController {
             if (video.getStatus() != VideoStatusEnum.AVAILABLE && video.getStatus() != VideoStatusEnum.SOFT_DELETED) {
                 return new ResponseEntity<>(VideoDownloadResponse.fail("Video is not available for download"), HttpStatus.BAD_REQUEST);
             }
+
+            MimeTypes allTypes = MimeTypes.getDefaultMimeTypes();
+            String extension = "";
+            try {
+                MimeType mimeType = allTypes.forName(video.getMime());
+                extension = mimeType.getExtension();
+            } catch (MimeTypeException e) {
+                logger.log(Level.WARNING, "could not find a mimeType for name: " + video.getMime());
+            }
+
             var contentDisposition = ContentDisposition
                     .builder("attachment")
-                    .filename(video.getFileName())
+                    .filename(video.getFileName() + extension)
                     .build();
             try {
                 String url = cloudFrontUtils.getSignedUrl(video.getPath(), Map.of("response-content-disposition", contentDisposition.toString()), 3600);
