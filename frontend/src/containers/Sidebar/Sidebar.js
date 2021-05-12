@@ -55,7 +55,6 @@ class Sidebar extends Component {
 		axios
 			.get("http://localhost:8080/video/userStorage")
 			.then((response) => {
-				console.log(response);
 				this.setState({
 					usedStorage: response.data.usedStorageBytes,
 					maxStorage: response.data.maxStorageBytes,
@@ -153,7 +152,6 @@ class Sidebar extends Component {
 		const submenuColor = {
 			color: customizedTheme.textColor,
 		};
-		console.log((this.state.usedStorage * 100) / this.state.maxStorage);
 
 		return (
 			<SidebarWrapper>

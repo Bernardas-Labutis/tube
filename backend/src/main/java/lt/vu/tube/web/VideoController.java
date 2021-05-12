@@ -36,6 +36,7 @@ import javax.persistence.EntityManager;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.io.InputStream;
+import java.sql.Timestamp;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -165,6 +166,8 @@ public class VideoController {
                         if (videoConfig.getValidMimeTypes().contains(mediaTypeResponse.getBody().getMediaType())) {
                             video.setStatus(VideoStatusEnum.AVAILABLE);
                             video.setMime(mediaTypeResponse.getBody().getMediaType());
+                            video.setPublic(false);
+                            video.setCreated(new Timestamp(System.currentTimeMillis()));
                             video = videoRepository.save(video);
                         } else {
                             logger.log(Level.INFO, "Failed to upload video, invalid type: " + mediaTypeResponse.getBody().getMediaType());
