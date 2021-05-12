@@ -14,8 +14,14 @@ import "react-modal-video/css/modal-video.min.css";
 import ModalVideo from "react-modal-video";
 import PageHeader from "../../components/utility/pageHeader";
 import LayoutWrapper from "../../components/utility/layoutWrapper";
-import { Row, Col } from "antd";
+import ContentHolder from "../../components/utility/contentHolder";
+import Box from "../../components/utility/box";
+import { Row, Col, Button } from "antd";
 import basicStyle from "../../config/basicStyle";
+import Dropzone from "../../components/uielements/dropzone";
+import DropzoneWrapper from "../../containers/AdvancedUI/dropzone/dropzone.style";
+import { notification } from "../../components";
+import FormData from "form-data";
 
 export default class MyVideos extends Component {
 	constructor(props) {
@@ -29,6 +35,9 @@ export default class MyVideos extends Component {
 			dataList: [],
 			isOpen: false,
 			videoUrl: "",
+			isUploadButtonEnabled: false,
+			addedFile: null,
+			dropzone: null,
 		};
 		this.openModal = this.openModal.bind(this);
 	}
@@ -120,7 +129,7 @@ export default class MyVideos extends Component {
 		return columns;
 	}
 	onCellChange(value, columnsKey, index) {
-		const { dataList } = this.state;
+		const { dataList } = [...this.state];
 		dataList[index][columnsKey] = value;
 		this.setState({ dataList });
 	}
@@ -144,7 +153,54 @@ export default class MyVideos extends Component {
 				link.click();
 			});
 	};
+	upload(file) {
+		console.log("added file");
+		console.log(this.state.addedFile);
+		const formData = new FormData();
+		let fileName =
+			file.name.substring(0, file.name.lastIndexOf(".")) || file.name;
+		formData.append("fileName", fileName);
+		formData.append("fileSize", 50);
+		formData.append("file", file);
+		return axios
+			.post("http://localhost:8080/video/upload", formData)
+			.then((response) => {
+				notification("success", `${file.name} successfully uploaded`),
+					this.setState({
+						isUploadButtonEnabled: false,
+					}),
+					console.log(response);
+				this.removeFile();
+			});
+	}
 	render() {
+		const componentConfig = {
+			method: true,
+			showFiletypeIcon: true,
+			uploadMultiple: false,
+			maxFilesize: 1024, // 1gb
+			maxFiles: 1,
+			dictMaxFilesExceeded: "You can only upload 1 video at a time",
+			dictRemoveFile: "Delete",
+			dictCancelUploadConfirmation: "Are you sure to cancel upload?",
+			postUrl: "no-url",
+		};
+		const djsConfig = {
+			autoProcessQueue: false,
+			acceptedFiles: "video/*",
+			maxFiles: 1,
+		};
+		const eventHandlers = {
+			addedfile: (file) => {
+				notification("success", `${file.name} added`);
+				this.setState({ isUploadButtonEnabled: true, addedFile: file });
+				console.log(file);
+			},
+			success: (file) =>
+				notification("success", `${file.name} successfully uploaded`),
+			error: (error) => notification("error", "could not upload video"),
+			init: this.initCallback.bind(this),
+		};
 		const { columns, dataList } = this.state;
 		const { rowStyle, colStyle, gutter } = basicStyle;
 		return (
@@ -171,7 +227,68 @@ export default class MyVideos extends Component {
 						</React.Fragment>
 					</Col>
 				</Row>
+				<Row style={rowStyle} gutter={gutter}>
+					<Col span={24}>
+						<DropzoneWrapper>
+							<Dropzone
+								addedFile={this.state.addedFile}
+								config={componentConfig}
+								eventHandlers={eventHandlers}
+								djsConfig={djsConfig}
+								accept
+							/>
+						</DropzoneWrapper>
+					</Col>
+				</Row>
+				<Row style={rowStyle} gutter={gutter}>
+					<Col span={24}>
+						<div style={{ float: "right" }}>
+							<Button
+								type="danger"
+								disabled={!this.state.isUploadButtonEnabled}
+								onClick={() => {
+									this.removeFile();
+									notification("info", "file removed");
+								}}
+							>
+								Remove uploaded file
+							</Button>
+							<Button
+								type="primary"
+								disabled={!this.state.isUploadButtonEnabled}
+								onClick={() => {
+									this.uploadAndRefresh(this.state.addedFile);
+								}}
+							>
+								Upload!
+							</Button>
+						</div>
+					</Col>
+				</Row>
 			</LayoutWrapper>
 		);
+	}
+	initCallback(dropzone) {
+		console.log(dropzone);
+		console.log("initCallback called");
+		this.state.dropzone = dropzone;
+		dropzone.on("addedfile", function (file) {
+			if (this.files.length > 1) {
+				this.removeFile(this.files[0]);
+			}
+		});
+	}
+
+	removeFile() {
+		if (this.state.dropzone) {
+			console.log(this.state.dropzone);
+			console.log("removeFile called");
+			this.state.dropzone.removeAllFiles();
+		}
+	}
+
+	async uploadAndRefresh(file) {
+		await this.upload(file);
+		this.getData();
 	}
 }
