@@ -5,6 +5,7 @@ import {
 	DeleteCell,
 	EditableCell,
 	RestoreCell,
+	DownloadCell,
 } from "../../commonHelpers/helperCells";
 import { tableinfos } from "./configs";
 import axios from "axios";
@@ -92,8 +93,19 @@ export default class Trashcan extends Component {
 				/>
 			),
 		};
+		const downloadColumn = {
+			title: "",
+			dataIndex: "download",
+			render: (text, record, index) => (
+				<DownloadCell
+					index={record.id}
+					onDownloadCell={this.onDownloadCell}
+				/>
+			),
+		};
 		columns.push(restoreColumn);
 		columns.push(deleteColumn);
+		columns.push(downloadColumn);
 		return columns;
 	}
 	onCellChange(value, columnsKey, index) {
@@ -110,6 +122,16 @@ export default class Trashcan extends Component {
 		axios
 			.get(`http://localhost:8080/video/recover/${index}`)
 			.then(() => this.getData());
+	};
+	onDownloadCell = (index) => {
+		axios
+			.get(`http://localhost:8080/video/download/${index}`)
+			.then((response) => {
+				const link = document.createElement("a");
+				link.href = response.data.url;
+				document.body.appendChild(link);
+				link.click();
+			});
 	};
 	render() {
 		const { columns, dataList } = this.state;

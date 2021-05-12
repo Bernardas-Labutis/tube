@@ -131,9 +131,14 @@ export default class MyVideos extends Component {
             .then(() => this.getData());*/
 	};
 	onDownloadCell = (index) => {
-		/*axios
-            .get(`http://localhost:8080/video/recover/${index}`)
-            .then(() => this.getData());*/
+		axios
+			.get(`http://localhost:8080/video/download/${index}`)
+			.then((response) => {
+				const link = document.createElement("a");
+				link.href = response.data.url;
+				document.body.appendChild(link);
+				link.click();
+			});
 	};
 	render() {
 		const { columns, dataList } = this.state;
