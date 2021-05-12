@@ -4,7 +4,6 @@ import TableWrapper from "../../commonStyles/table.style";
 import {
 	DeleteCell,
 	EditableCell,
-	ShareCell,
 	DownloadCell,
 } from "../../commonHelpers/helperCells";
 import { tableinfos } from "./configs";
@@ -16,6 +15,7 @@ import PageHeader from "../../components/utility/pageHeader";
 import LayoutWrapper from "../../components/utility/layoutWrapper";
 import { Row, Col } from "antd";
 import basicStyle from "../../config/basicStyle";
+import TubeShareCell from "./tubesharecell"
 
 export default class MyVideos extends Component {
 	constructor(props) {
@@ -101,7 +101,7 @@ export default class MyVideos extends Component {
 			title: "Actions",
 			dataIndex: "share",
 			render: (text, record, index) => (
-				<ShareCell index={record.id} onShareCell={this.onShareCell} />
+				<TubeShareCell index={record.id}/>
 			),
 		};
 		const downloadColumn = {
@@ -128,11 +128,6 @@ export default class MyVideos extends Component {
 		axios
 			.get(`http://localhost:8080/video/soft-delete/${index}`)
 			.then(() => this.getData());
-	};
-	onShareCell = (index) => {
-		/*axios
-            .get(`http://localhost:8080/video/recover/${index}`)
-            .then(() => this.getData());*/
 	};
 	onDownloadCell = (index) => {
 		axios

@@ -442,6 +442,9 @@ public class VideoController {
         if (link == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
+        else if (link.getVideo().getStatus() != VideoStatusEnum.AVAILABLE) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
         else {
             Video video = link.getVideo();
             String viewUrl;

@@ -190,5 +190,11 @@
     "rules": {
       "jsx-a11y/href-no-hash": "off"
     }
+  },
+  "proxy" : { 
+    "/video":{
+      "target": "http://localhost:8080/",
+      "changeOrigin": true
+    }
   }
 }
