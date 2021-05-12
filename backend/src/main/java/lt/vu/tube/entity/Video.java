@@ -36,6 +36,9 @@ public class Video {
     @ManyToOne
     private AppUser owner;
 
+    @OneToOne(cascade = CascadeType.ALL)
+    private VideoShareLink videoShareLink;
+
     public UUID getId() {
         return id;
     }
@@ -114,5 +117,17 @@ public class Video {
 
     public void setOwner(AppUser owner) {
         this.owner = owner;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public VideoShareLink getVideoShareLink() {
+        return videoShareLink;
+    }
+
+    public void setVideoShareLink(VideoShareLink videoShareLink) {
+        this.videoShareLink = videoShareLink;
     }
 }

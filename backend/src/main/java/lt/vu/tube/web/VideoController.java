@@ -1,15 +1,18 @@
 package lt.vu.tube.web;
 
 import lt.vu.tube.config.VideoConfig;
+import lt.vu.tube.dto.SharedVideoDTO;
 import lt.vu.tube.dto.VideoDTO;
 import lt.vu.tube.entity.AppUser;
 import lt.vu.tube.entity.Video;
+import lt.vu.tube.entity.VideoShareLink;
 import lt.vu.tube.enums.VideoStatusEnum;
 import lt.vu.tube.model.LambdaResponse;
 import lt.vu.tube.model.MediaTypeResponseBody;
 import lt.vu.tube.repository.AppUserRepository;
 import lt.vu.tube.repository.CurrentUserVideoDAO;
 import lt.vu.tube.repository.VideoRepository;
+import lt.vu.tube.repository.VideoShareLinkRepository;
 import lt.vu.tube.response.VideoDownloadResponse;
 import lt.vu.tube.response.VideoStorageResponse;
 import lt.vu.tube.response.VideoUploadResponse;
@@ -34,6 +37,7 @@ import software.amazon.awssdk.awscore.exception.AwsServiceException;
 
 import javax.persistence.EntityManager;
 import javax.servlet.http.HttpServletRequest;
+import javax.transaction.Transactional;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
@@ -65,6 +69,8 @@ public class VideoController {
     AuthenticatedUser authenticatedUser;
     @Autowired
     CurrentUserVideoDAO currentUserVideoDAO;
+    @Autowired
+    VideoShareLinkRepository videoShareLinkRepository;
 
     @RequestMapping(value = "/upload")
     @PreAuthorize("hasAnyRole('ROLE_USER')")
@@ -392,6 +398,83 @@ public class VideoController {
             return new ResponseEntity<>(new VideoStorageResponse(), HttpStatus.UNAUTHORIZED);
         } else{
             return new ResponseEntity<>(new VideoStorageResponse(currentUser.getUsedStorage(), currentUser.getMaxStorage()), HttpStatus.OK);
+        }
+    }
+
+    //Passima iš video id
+    @GetMapping("/share/{videoId}")
+    @PreAuthorize("hasAnyRole('ROLE_USER')")
+    public ResponseEntity<UUID> getShareId(@PathVariable UUID videoId) {
+        AppUser currentUser = authenticatedUser.getAuthenticatedUser();
+        Video video = videoRepository.findById(videoId).orElse(null);
+        if (video == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        } else if (video.getOwner() == null || !video.getOwner().equals(currentUser)) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        } else {
+            if (video.getVideoShareLink() == null) {
+                video.setVideoShareLink(new VideoShareLink());
+                video = videoRepository.save(video);
+            }
+            return new ResponseEntity<>(video.getVideoShareLink().getId(), HttpStatus.OK);
+        }
+    }
+    //Trina per shareId
+    @DeleteMapping("/share/{shareId}")
+    @PreAuthorize("hasAnyRole('ROLE_USER')")
+    public ResponseEntity<HttpStatus> deleteShareId(@PathVariable UUID shareId) {
+        AppUser currentUser = authenticatedUser.getAuthenticatedUser();
+        VideoShareLink link = videoShareLinkRepository.findById(shareId).orElse(null);
+        if (link == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        } else if (link.getVideo().getOwner() == null || !link.getVideo().getOwner().equals(currentUser)) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        } else {
+            videoShareLinkRepository.delete(link);
+            return new ResponseEntity<>(HttpStatus.OK);
+        }
+    }
+
+    @GetMapping("/share/get/{id}")
+    @PreAuthorize("permitAll()")
+    public ResponseEntity<SharedVideoDTO> getSharedVideo(@PathVariable UUID id) {
+        VideoShareLink link = videoShareLinkRepository.findById(id).orElse(null);
+        if (link == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        else {
+            Video video = link.getVideo();
+            String viewUrl;
+            String downloadUrl;
+            MimeTypes allTypes = MimeTypes.getDefaultMimeTypes();
+            String extension = "";
+            try {
+                MimeType mimeType = allTypes.forName(video.getMime());
+                extension = mimeType.getExtension();
+            } catch (MimeTypeException e) {
+                logger.log(Level.WARNING, "Could not find a mimeType for name: " + video.getMime());
+            }
+            var contentDisposition = ContentDisposition
+                    .builder("attachment")
+                    .filename(video.getFileName() + extension)
+                    .build();
+            try {
+                viewUrl = cloudFrontUtils.getSignedUrl(video.getPath(), 3600);
+                downloadUrl = cloudFrontUtils.getSignedUrl(video.getPath(), Map.of("response-content-disposition", contentDisposition.toString()), 3600);
+            } catch (Exception e) {
+                logger.log(Level.SEVERE, "Error while trying to sign a urls for " + video.getId(), e);
+                return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+            return new ResponseEntity<>(new SharedVideoDTO(
+                    video.getId().toString(),
+                    video.getId().toString(),
+                    video.getFileName(),
+                    video.getCreated(),
+                    video.getFileSize(),
+                    video.getPublic(),
+                    viewUrl,
+                    downloadUrl
+            ), HttpStatus.OK);
         }
     }
 }

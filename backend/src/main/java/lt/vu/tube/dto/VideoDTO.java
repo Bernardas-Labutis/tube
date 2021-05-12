@@ -1,5 +1,6 @@
 package lt.vu.tube.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.io.FileUtils;
@@ -18,6 +19,7 @@ public class VideoDTO {
     private String size;
     private String privacy;
 
+    @JsonIgnore
     private DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss ", Locale.ENGLISH);
 
     public VideoDTO(String id, String key, String title, Timestamp uploadTime, Long size, boolean isPrivate) {
