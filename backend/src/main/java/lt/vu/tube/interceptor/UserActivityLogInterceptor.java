@@ -61,7 +61,8 @@ public class UserActivityLogInterceptor implements HandlerInterceptor {
                     + "]" + request.getRequestURI() + getParameters(request));
             return true;
         }
-        throw new RuntimeException("handler not an instance of HandlerMethod");
+        logger.warning("[preHandle] handler not an instance of HandlerMethod: " + handler.getClass());
+        return true;
     }
 
     private String getParameters(HttpServletRequest request) {
