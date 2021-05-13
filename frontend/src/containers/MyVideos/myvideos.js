@@ -22,7 +22,6 @@ export default class MyVideos extends Component {
 		super(props);
 		this.onCellChange = this.onCellChange.bind(this);
 		this.onDeleteCell = this.onDeleteCell.bind(this);
-		this.onShareCell = this.onShareCell.bind(this);
 		this.onDownloadCell = this.onDownloadCell.bind(this);
 		this.state = {
 			columns: this.createcolumns(clone(tableinfos[0].columns)),
