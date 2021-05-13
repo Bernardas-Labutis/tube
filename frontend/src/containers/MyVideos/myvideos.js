@@ -17,7 +17,7 @@ import ContentHolder from "../../components/utility/contentHolder";
 import Box from "../../components/utility/box";
 import { Row, Col, Button } from "antd";
 import basicStyle from "../../config/basicStyle";
-import TubeShareCell from "./tubesharecell
+import TubeShareCell from "./tubesharecell";
 import Dropzone from "../../components/uielements/dropzone";
 import DropzoneWrapper from "../../containers/AdvancedUI/dropzone/dropzone.style";
 import { notification } from "../../components";
