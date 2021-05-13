@@ -17,6 +17,7 @@
     "express": "^4.15.3",
     "firebase": "^8.4.3",
     "fixed-data-table-2": "^0.8.8",
+    "form-data": "^4.0.0",
     "frappe-charts": "^0.0.8",
     "globalize": "^1.2.3",
     "history": "^4.6.3",
