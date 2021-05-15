@@ -32,7 +32,7 @@ class SignUp extends React.Component {
 
   registerCall() {
     if(this.state.password == this.state.passwordConfirm){
-      axios.post('http://localhost:8080/api/v1/registration', {
+      axios.post('/api/v1/registration', {
         "firstName": this.state.firstName,
         "lastName": this.state.lastName,
         "email": this.state.username,
