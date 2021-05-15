@@ -17,13 +17,17 @@ public class AuthenticatedUser {
     private final AppUserRepository appUserRepository;
 
     public AppUser getAuthenticatedUser() {
-        Object email = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if (email instanceof String) {
-            return appUserRepository.findByEmail(((String)email))
-                    .orElseThrow(() ->
-                            new UsernameNotFoundException(
-                                    String.format(USER_NOT_FOUND_MSG, email)));
-        } else {
+        try {
+            Object email = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            if (email instanceof String) {
+                return appUserRepository.findByEmail(((String)email))
+                        .orElseThrow(() ->
+                                new UsernameNotFoundException(
+                                        String.format(USER_NOT_FOUND_MSG, email)));
+            } else {
+                return null;
+            }
+        } catch (Exception e){
             return null;
         }
     }
