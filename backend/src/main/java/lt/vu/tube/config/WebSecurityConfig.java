@@ -7,9 +7,11 @@ import lt.vu.tube.jwt.JwtUsernameAndPasswordAuthenticationFilter;
 import lt.vu.tube.services.AppUserService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -69,9 +71,18 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers("/", "index", "/css/*", "/js/*").permitAll()
                 .antMatchers("/api/v*/registration/**").permitAll()
                 .antMatchers("/login").permitAll()
+                .antMatchers(HttpMethod.GET, "/share/get/*").permitAll()
                 //.antMatchers("/video/**").hasRole(USER.name())
                 .anyRequest()
                 .authenticated();
+    }
+
+    //HttpSecurity ignoravo mano maldas praleis šitą endpoint
+    //WebSecurity ima priority tik galima problema kad šito request neauthentifikuoja
+    //Net ir prisijungus tai loguose visada bus anonymous
+    @Override
+    public void configure(WebSecurity web) throws Exception {
+        web.ignoring().antMatchers("/video/share/get/*");
     }
 
     @Override

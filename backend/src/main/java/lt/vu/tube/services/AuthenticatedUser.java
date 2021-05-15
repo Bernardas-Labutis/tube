@@ -17,6 +17,9 @@ public class AuthenticatedUser {
     private final AppUserRepository appUserRepository;
 
     public AppUser getAuthenticatedUser() {
+        if (SecurityContextHolder.getContext().getAuthentication() == null) {
+            return null;
+        }
         Object email = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         if (email instanceof String) {
             return appUserRepository.findByEmail(((String)email))

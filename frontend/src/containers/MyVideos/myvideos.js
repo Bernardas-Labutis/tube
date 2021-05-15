@@ -4,7 +4,6 @@ import TableWrapper from "../../commonStyles/table.style";
 import {
 	DeleteCell,
 	EditableCell,
-	ShareCell,
 	DownloadCell,
 } from "../../commonHelpers/helperCells";
 import { tableinfos } from "./configs";
@@ -18,6 +17,7 @@ import ContentHolder from "../../components/utility/contentHolder";
 import Box from "../../components/utility/box";
 import { Row, Col, Button } from "antd";
 import basicStyle from "../../config/basicStyle";
+import TubeShareCell from "./tubesharecell";
 import Dropzone from "../../components/uielements/dropzone";
 import DropzoneWrapper from "../../containers/AdvancedUI/dropzone/dropzone.style";
 import { notification } from "../../components";
@@ -28,7 +28,6 @@ export default class MyVideos extends Component {
 		super(props);
 		this.onCellChange = this.onCellChange.bind(this);
 		this.onDeleteCell = this.onDeleteCell.bind(this);
-		this.onShareCell = this.onShareCell.bind(this);
 		this.onDownloadCell = this.onDownloadCell.bind(this);
 		this.state = {
 			columns: this.createcolumns(clone(tableinfos[0].columns)),
@@ -110,7 +109,7 @@ export default class MyVideos extends Component {
 			title: "Actions",
 			dataIndex: "share",
 			render: (text, record, index) => (
-				<ShareCell index={record.id} onShareCell={this.onShareCell} />
+				<TubeShareCell index={record.id}/>
 			),
 		};
 		const downloadColumn = {
@@ -137,11 +136,6 @@ export default class MyVideos extends Component {
 		axios
 			.get(`http://localhost:8080/video/soft-delete/${index}`)
 			.then(() => this.getData());
-	};
-	onShareCell = (index) => {
-		/*axios
-            .get(`http://localhost:8080/video/recover/${index}`)
-            .then(() => this.getData());*/
 	};
 	onDownloadCell = (index) => {
 		axios
