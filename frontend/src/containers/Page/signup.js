@@ -38,10 +38,15 @@ class SignUp extends React.Component {
         "email": this.state.username,
         "password": this.state.password
       }).then((response) => {
-        console.log(response)
+        if(response.status == 200){
+          localStorage.clear();
+          this.props.history.push('/signin');
+        } else {
+          this.setState({error: "Something when not well"});
+        }
       });
     } else {
-      this.state.error = "Passwords don't match"
+      this.setState({error: "Passwords don't match"});
     }
     
   }
@@ -93,6 +98,10 @@ class SignUp extends React.Component {
                   <IntlMessages id="page.signUpButton" />
                 </Button>
               </div>
+              <p>
+              {this.state.error} 
+              </p>
+              
               <div className="isoInputWrapper isoCenterComponent isoHelperWrapper">
                 <Link to="/signin">
                   <IntlMessages id="page.signUpAlreadyAccount" />

@@ -29,7 +29,6 @@ import static lt.vu.tube.enums.AppUserRole.*;
 @Configuration
 @AllArgsConstructor
 @EnableWebSecurity
-@EnableWebMvc
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
     private final AppUserService appUserService;

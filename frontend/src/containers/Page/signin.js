@@ -6,6 +6,7 @@ import Button from '../../components/uielements/button';
 import authAction from '../../redux/auth/actions';
 import IntlMessages from '../../components/utility/intlMessages';
 import SignInStyleWrapper from './signin.style';
+import axios from 'axios';
 
 const { login } = authAction;
 
@@ -13,7 +14,8 @@ class SignIn extends Component {
   state = {
     redirectToReferrer: false,
     username: '',
-    password: ''
+    password: '',
+    error: ''
   };
   componentWillReceiveProps(nextProps) {
     if (
@@ -23,9 +25,30 @@ class SignIn extends Component {
       this.setState({ redirectToReferrer: true });
     }
   }
+
+  loginCall() {
+    axios.post('/login', {
+      "username": this.state.username,
+      "password": this.state.password
+    }).then((response) =>{
+      if(response.status == 200){
+        localStorage.setItem('id_token', response.headers.authorization);
+        this.props.history.push('/dashboard/my-videos');
+
+      } else {
+        localStorage.clear();
+        this.setState({error: "Somethings wrong"});
+      }
+    });
+
+    
+  }
+
+
   handleLogin = () => {
     const { login } = this.props;
-    login(this.state.username, this.state.password);
+    this.loginCall();
+    //login(this.state.username, this.state.password);
     //this.props.history.push('/dashboard');//TODO need to check somehow if has token from local storage and push dashboard or signin
     
   };
@@ -60,7 +83,9 @@ class SignIn extends Component {
                   <IntlMessages id="page.signInButton" />
                 </Button>
               </div>
-
+              <p>
+                {this.state.error}
+              </p>
               <p className="isoHelperText">
                 <IntlMessages id="page.signInPreview" />
               </p>
