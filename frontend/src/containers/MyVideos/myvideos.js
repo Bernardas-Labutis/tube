@@ -47,7 +47,7 @@ export default class MyVideos extends Component {
 	getData() {
 		let data = [];
 		axios
-			.get("http://localhost:8080/video/userAvailable", {})
+			.get("/video/userAvailable", {})
 			.then((response) => {
 				console.log(response);
 				data = response.data;
@@ -65,7 +65,7 @@ export default class MyVideos extends Component {
 	getVideoUrl(videoId) {
 		let videoUrl = "";
 		axios
-			.get("http://localhost:8080/video/viewingUrl/" + videoId)
+			.get("/video/viewingUrl/" + videoId)
 			.then((response) => {
 				console.log(response);
 				this.setState({
@@ -134,12 +134,12 @@ export default class MyVideos extends Component {
 	}
 	onDeleteCell = (index) => {
 		axios
-			.get(`http://localhost:8080/video/soft-delete/${index}`)
+			.get(`/video/soft-delete/${index}`)
 			.then(() => this.getData());
 	};
 	onDownloadCell = (index) => {
 		axios
-			.get(`http://localhost:8080/video/download/${index}`)
+			.get(`/video/download/${index}`)
 			.then((response) => {
 				const link = document.createElement("a");
 				link.href = response.data.url;
@@ -157,7 +157,7 @@ export default class MyVideos extends Component {
 		formData.append("fileSize", 50);
 		formData.append("file", file);
 		return axios
-			.post("http://localhost:8080/video/upload", formData)
+			.post("/video/upload", formData)
 			.then((response) => {
 				notification("success", `${file.name} successfully uploaded`),
 					this.setState({

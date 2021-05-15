@@ -53,7 +53,7 @@ class Sidebar extends Component {
 
 	getStorageData() {
 		axios
-			.get("http://localhost:8080/video/userStorage")
+			.get("/video/userStorage")
 			.then((response) => {
 				this.setState({
 					usedStorage: response.data.usedStorageBytes,
