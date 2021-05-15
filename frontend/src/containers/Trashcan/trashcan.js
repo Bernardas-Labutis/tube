@@ -37,7 +37,7 @@ export default class Trashcan extends Component {
 	getData() {
 		let data = [];
 		axios
-			.get("http://localhost:8080/video/soft-deleted", {})
+			.get("/video/soft-deleted", {})
 			.then((response) => {
 				console.log(response);
 				data = response.data;
@@ -55,7 +55,7 @@ export default class Trashcan extends Component {
 	getVideoUrl(videoId) {
 		let videoUrl = "";
 		axios
-			.get("http://localhost:8080/video/viewingUrl/" + videoId)
+			.get("/video/viewingUrl/" + videoId)
 			.then((response) => {
 				console.log(response);
 				this.setState({
@@ -119,17 +119,17 @@ export default class Trashcan extends Component {
 	}
 	onDeleteCell = (index) => {
 		axios
-			.delete(`http://localhost:8080/video/${index}`)
+			.delete(`/video/${index}`)
 			.then(() => this.getData());
 	};
 	onRestoreCell = (index) => {
 		axios
-			.get(`http://localhost:8080/video/recover/${index}`)
+			.get(`/video/recover/${index}`)
 			.then(() => this.getData());
 	};
 	onDownloadCell = (index) => {
 		axios
-			.get(`http://localhost:8080/video/download/${index}`)
+			.get(`/video/download/${index}`)
 			.then((response) => {
 				const link = document.createElement("a");
 				link.href = response.data.url;

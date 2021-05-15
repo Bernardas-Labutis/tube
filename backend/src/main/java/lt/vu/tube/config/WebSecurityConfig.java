@@ -29,7 +29,6 @@ import static lt.vu.tube.enums.AppUserRole.*;
 @Configuration
 @AllArgsConstructor
 @EnableWebSecurity
-@EnableWebMvc
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
     private final AppUserService appUserService;
@@ -68,11 +67,6 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .addFilter(new JwtUsernameAndPasswordAuthenticationFilter(authenticationManager(), jwtConfig, secretKey))
                 .addFilterAfter(new JwtTokenVerifier(secretKey, jwtConfig),JwtUsernameAndPasswordAuthenticationFilter.class)
                 .authorizeRequests()
-                .antMatchers("/", "index", "/css/*", "/js/*").permitAll()
-                .antMatchers("/api/v*/registration/**").permitAll()
-                .antMatchers("/login").permitAll()
-                .antMatchers(HttpMethod.GET, "/share/get/*").permitAll()
-                //.antMatchers("/video/**").hasRole(USER.name())
                 .anyRequest()
                 .authenticated();
     }
@@ -82,7 +76,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     //Net ir prisijungus tai loguose visada bus anonymous
     @Override
     public void configure(WebSecurity web) throws Exception {
-        web.ignoring().antMatchers("/video/share/get/*");
+        web.ignoring().antMatchers("/video/share/get/*", "/api/v*/registration/**");
     }
 
     @Override

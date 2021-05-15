@@ -24,7 +24,7 @@ const fakeApiCall = true; // auth0 or express JWT
 export function* loginRequest() {
   yield takeEvery('LOGIN_REQUEST', function*(payload) {
     console.log(payload);
-    const response = yield axios.post('http://localhost:8080/login', {
+    const response = yield axios.post('login', {
       username: payload.username,
       password: payload.password
     })
@@ -46,6 +46,7 @@ export function* loginRequest() {
 export function* loginSuccess() {
   yield takeEvery(actions.LOGIN_SUCCESS, function*(payload) {
     yield localStorage.setItem('id_token', payload.token);
+    yield put(push('dashboard'));
   });
 }
 

@@ -194,7 +194,15 @@
     }
   },
   "proxy": {
+    "/login": {
+      "target": "http://localhost:8080/",
+      "changeOrigin": true
+    },
     "/video": {
+      "target": "http://localhost:8080/",
+      "changeOrigin": true
+    },
+    "/api": {
       "target": "http://localhost:8080/",
       "changeOrigin": true
     }

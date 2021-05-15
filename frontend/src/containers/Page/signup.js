@@ -2,20 +2,24 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { connect } from 'react-redux';
 import Input from '../../components/uielements/input';
-import Checkbox from '../../components/uielements/checkbox';
 import Button from '../../components/uielements/button';
-import authAction from '../../redux/auth/actions';
-import Auth0 from '../../helpers/auth0/index';
-import Firebase from '../../helpers/firebase';
-import FirebaseLogin from '../../components/firebase';
 import IntlMessages from '../../components/utility/intlMessages';
 import SignUpStyleWrapper from './signup.style';
+import authAction from '../../redux/auth/actions';
+import axios from 'axios';
 
 const { login } = authAction;
 
 class SignUp extends React.Component {
   state = {
     redirectToReferrer: false,
+    firstName: '',
+    lastName: '',
+    username: '',
+    password: '',
+    passwordConfirm:'',
+    error: ''
+
   };
   componentWillReceiveProps(nextProps) {
     if (
@@ -25,10 +29,32 @@ class SignUp extends React.Component {
       this.setState({ redirectToReferrer: true });
     }
   }
-  handleLogin = () => {
+
+  registerCall() {
+    if(this.state.password == this.state.passwordConfirm){
+      axios.post('/api/v1/registration', {
+        "firstName": this.state.firstName,
+        "lastName": this.state.lastName,
+        "email": this.state.username,
+        "password": this.state.password
+      }).then((response) => {
+        if(response.status == 200){
+          localStorage.clear();
+          this.props.history.push('/signin');
+        } else {
+          this.setState({error: "Something when not well"});
+        }
+      });
+    } else {
+      this.setState({error: "Passwords don't match"});
+    }
+    
+  }
+
+  handleRegistration = () => {
     const { login } = this.props;
-    login();
-    this.props.history.push('/dashboard');
+    this.registerCall();
+    //this.props.history.push('/signin');
   };
   render() {
     return (
@@ -42,21 +68,20 @@ class SignUp extends React.Component {
             </div>
 
             <div className="isoSignUpForm">
-              <div className="isoInputWrapper isoLeftRightComponent">
-                <Input size="large" placeholder="First name" />
-                <Input size="large" placeholder="Last name" />
+            <div className="isoInputWrapper">
+                <Input size="large" placeholder="First Name" value={this.state.firstName} onChange={evt => this.setState({firstName: evt.target.value})}/>
               </div>
 
               <div className="isoInputWrapper">
-                <Input size="large" placeholder="Username" />
+                <Input size="large" placeholder="Last Name" value={this.state.lastName} onChange={evt => this.setState({lastName: evt.target.value})}/>
               </div>
 
               <div className="isoInputWrapper">
-                <Input size="large" placeholder="Email" />
+                <Input size="large" placeholder="Email" value={this.state.username} onChange={evt => this.setState({username: evt.target.value})}/>
               </div>
 
               <div className="isoInputWrapper">
-                <Input size="large" type="password" placeholder="Password" />
+                <Input onChange={evt => this.setState({password: evt.target.value})} value={this.state.password} size="large" type="password" placeholder="Password" />
               </div>
 
               <div className="isoInputWrapper">
@@ -64,40 +89,19 @@ class SignUp extends React.Component {
                   size="large"
                   type="password"
                   placeholder="Confirm Password"
+                  onChange={evt => this.setState({passwordConfirm: evt.target.value})}
+                  value={this.state.passwordConfirm}
                 />
               </div>
-
-              <div className="isoInputWrapper" style={{ marginBottom: '50px' }}>
-                <Checkbox>
-                  <IntlMessages id="page.signUpTermsConditions" />
-                </Checkbox>
-              </div>
-
               <div className="isoInputWrapper">
-                <Button type="primary">
+                <Button type="primary" onClick={this.handleRegistration}>
                   <IntlMessages id="page.signUpButton" />
                 </Button>
               </div>
-              <div className="isoInputWrapper isoOtherLogin">
-                <Button onClick={this.handleLogin} type="primary btnFacebook">
-                  <IntlMessages id="page.signUpFacebook" />
-                </Button>
-                <Button onClick={this.handleLogin} type="primary btnGooglePlus">
-                  <IntlMessages id="page.signUpGooglePlus" />
-                </Button>
-                {Auth0.isValid &&
-                  <Button
-                    onClick={() => {
-                      Auth0.login(this.handleLogin);
-                    }}
-                    type="primary btnAuthZero"
-                  >
-                    <IntlMessages id="page.signUpAuth0" />
-                  </Button>}
-
-                {Firebase.isValid &&
-                  <FirebaseLogin signup={true} login={this.handleLogin} />}
-              </div>
+              <p>
+              {this.state.error} 
+              </p>
+              
               <div className="isoInputWrapper isoCenterComponent isoHelperWrapper">
                 <Link to="/signin">
                   <IntlMessages id="page.signUpAlreadyAccount" />
