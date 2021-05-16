@@ -26,29 +26,27 @@ class SignIn extends Component {
     }
   }
 
-  loginCall() {
-    axios.post('/login', {
-      "username": this.state.username,
-      "password": this.state.password
-    }).then((response) =>{
-      if(response.status == 200){
-        localStorage.setItem('id_token', response.headers.authorization);
-        this.props.history.push('/dashboard/my-videos');
+  // loginCall() {
+  //   axios.post('/login', {
+  //     "username": this.state.username,
+  //     "password": this.state.password
+  //   }).then((response) =>{
+  //     if(response.status == 200){
+  //       localStorage.setItem('id_token', response.headers.authorization);
+  //       this.props.history.push('/dashboard/my-videos');
 
-      } else {
-        localStorage.clear();
-        this.setState({error: "Somethings wrong"});
-      }
-    });
-
-    
-  }
+  //     } else {
+  //       localStorage.clear();
+  //       this.setState({error: "Somethings wrong"});
+  //     }
+  //   });
+  // }
 
 
   handleLogin = () => {
     const { login } = this.props;
-    this.loginCall();
-    //login(this.state.username, this.state.password);
+    //this.loginCall();
+    login(this.state.username, this.state.password);
     //this.props.history.push('/dashboard');//TODO need to check somehow if has token from local storage and push dashboard or signin
     
   };
