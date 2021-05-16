@@ -94,12 +94,11 @@ export default connect(state => ({
 
 (function() {
   var token = localStorage.id_token;
-  if (token) {
+  if (token != null) {
       axios.defaults.headers.common['Authorization'] = token;
   } else {
-      axios.defaults.headers.common['Authorization'] = null;
-      /*if setting null does not remove `Authorization` header then try     
-        delete axios.defaults.headers.common['Authorization'];
-      */
+      //axios.defaults.headers.common['Authorization'] = null;
+      delete axios.defaults.headers.common['Authorization'];
+
   }
 })();

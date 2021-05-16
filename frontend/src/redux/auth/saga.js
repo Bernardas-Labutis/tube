@@ -3,7 +3,7 @@ import { push } from 'react-router-redux';
 import { clearToken } from '../../helpers/utility';
 import actions from './actions';
 import axios from 'axios';
-import '../../axiosheader';
+import checkforHeader from '../../axiosheader';
 
 const fakeApiCall = true; // auth0 or express JWT
 
@@ -23,6 +23,7 @@ const fakeApiCall = true; // auth0 or express JWT
 
 
 export function* loginRequest() {
+  checkforHeader();
   yield takeEvery('LOGIN_REQUEST', function*(payload) {
     console.log(payload);
     const response = yield axios.post('login', {

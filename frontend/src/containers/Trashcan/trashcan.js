@@ -16,7 +16,7 @@ import PageHeader from "../../components/utility/pageHeader";
 import LayoutWrapper from "../../components/utility/layoutWrapper";
 import { Row, Col } from "antd";
 import basicStyle from "../../config/basicStyle";
-import '../../axiosheader';
+import checkforHeader from '../../axiosheader';
 
 export default class Trashcan extends Component {
 	constructor(props) {
@@ -37,6 +37,7 @@ export default class Trashcan extends Component {
 
 	getData() {
 		let data = [];
+		checkforHeader();
 		axios
 			.get("http://localhost:8080/video/soft-deleted", {})
 			.then((response) => {
@@ -55,6 +56,7 @@ export default class Trashcan extends Component {
 
 	getVideoUrl(videoId) {
 		let videoUrl = "";
+		checkforHeader();
 		axios
 			.get("http://localhost:8080/video/viewingUrl/" + videoId)
 			.then((response) => {
@@ -119,16 +121,19 @@ export default class Trashcan extends Component {
 		this.setState({ dataList });
 	}
 	onDeleteCell = (index) => {
+		checkforHeader();
 		axios
 			.delete(`http://localhost:8080/video/${index}`)
 			.then(() => this.getData());
 	};
 	onRestoreCell = (index) => {
+		checkforHeader();
 		axios
 			.get(`http://localhost:8080/video/recover/${index}`)
 			.then(() => this.getData());
 	};
 	onDownloadCell = (index) => {
+		checkforHeader();
 		axios
 			.get(`http://localhost:8080/video/download/${index}`)
 			.then((response) => {
