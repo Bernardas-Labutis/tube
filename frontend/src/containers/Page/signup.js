@@ -7,6 +7,7 @@ import IntlMessages from '../../components/utility/intlMessages';
 import SignUpStyleWrapper from './signup.style';
 import authAction from '../../redux/auth/actions';
 import axios from 'axios';
+import '../../axiosheader';
 
 const { login } = authAction;
 

@@ -2,6 +2,7 @@
 import React, { Component } from "react";
 import axios from "axios";
 import { Icon, Input, Popconfirm } from "antd";
+import '../../axiosheader';
 
 export default class TubeShareCell extends Component {
 	constructor(props) {

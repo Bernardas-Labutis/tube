@@ -17,6 +17,7 @@ import SingleProgressWidget from "../../../src/containers/Widgets/progress/progr
 import IsoWidgetsWrapper from "../../../src/containers/Widgets/widgets-wrapper";
 import prettyBytes from "pretty-bytes";
 import basicStyle from "../../config/basicStyle";
+import '../../axiosheader';
 
 const SubMenu = Menu.SubMenu;
 const MenuItemGroup = Menu.ItemGroup;

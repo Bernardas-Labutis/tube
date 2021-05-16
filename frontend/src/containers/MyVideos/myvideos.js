@@ -22,6 +22,7 @@ import Dropzone from "../../components/uielements/dropzone";
 import DropzoneWrapper from "../../containers/AdvancedUI/dropzone/dropzone.style";
 import { notification } from "../../components";
 import FormData from "form-data";
+import '../../axiosheader';
 
 export default class MyVideos extends Component {
 	constructor(props) {
