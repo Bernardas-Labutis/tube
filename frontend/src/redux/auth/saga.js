@@ -46,7 +46,7 @@ export function* loginRequest() {
 export function* loginSuccess() {
   yield takeEvery(actions.LOGIN_SUCCESS, function*(payload) {
     yield localStorage.setItem('id_token', payload.token);
-    yield put(push('dashboard'));
+    yield put(push('dashboard/my-videos'));
   });
 }
 
