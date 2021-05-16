@@ -16,6 +16,7 @@ import PageHeader from "../../components/utility/pageHeader";
 import LayoutWrapper from "../../components/utility/layoutWrapper";
 import { Row, Col } from "antd";
 import basicStyle from "../../config/basicStyle";
+import '../../axiosheader';
 
 export default class Trashcan extends Component {
 	constructor(props) {
@@ -37,7 +38,7 @@ export default class Trashcan extends Component {
 	getData() {
 		let data = [];
 		axios
-			.get("/video/soft-deleted", {})
+			.get("http://localhost:8080/video/soft-deleted", {})
 			.then((response) => {
 				console.log(response);
 				data = response.data;
@@ -55,7 +56,7 @@ export default class Trashcan extends Component {
 	getVideoUrl(videoId) {
 		let videoUrl = "";
 		axios
-			.get("/video/viewingUrl/" + videoId)
+			.get("http://localhost:8080/video/viewingUrl/" + videoId)
 			.then((response) => {
 				console.log(response);
 				this.setState({
@@ -69,6 +70,14 @@ export default class Trashcan extends Component {
 	}
 
 	createcolumns(columns) {
+		columns[0].render = (text, record, index) => (
+			<EditableCell
+				index={index}
+				columnsKey={columns[0].key}
+				value={text[columns[0].key]}
+				onChange={this.onCellChange}
+			/>
+		);
 		const deleteColumn = {
 			title: "",
 			dataIndex: "delete",
@@ -111,17 +120,17 @@ export default class Trashcan extends Component {
 	}
 	onDeleteCell = (index) => {
 		axios
-			.delete(`/video/${index}`)
+			.delete(`http://localhost:8080/video/${index}`)
 			.then(() => this.getData());
 	};
 	onRestoreCell = (index) => {
 		axios
-			.get(`/video/recover/${index}`)
+			.get(`http://localhost:8080/video/recover/${index}`)
 			.then(() => this.getData());
 	};
 	onDownloadCell = (index) => {
 		axios
-			.get(`/video/download/${index}`)
+			.get(`http://localhost:8080/video/download/${index}`)
 			.then((response) => {
 				const link = document.createElement("a");
 				link.href = response.data.url;
