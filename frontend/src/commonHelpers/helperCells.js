@@ -37,6 +37,19 @@ class EditableCell extends Component {
 	}
 	render() {
 		const { value, editable } = this.state;
+		const handleKeyDown = e => {
+			if (e.key === "<"
+				|| e.key === ">"
+				|| e.key === ":"
+				|| e.key === "\""
+				|| e.key === "\\"
+				|| e.key === "\/"
+				|| e.key === "|"
+				|| e.key === "?"
+				|| e.key === "*") {
+				e.preventDefault();
+			}
+		};
 		return (
 			<div onClick={(e) => e.stopPropagation()}>
 				<div className="isoEditData">
@@ -46,6 +59,7 @@ class EditableCell extends Component {
 								value={value}
 								onChange={this.handleChange}
 								onPressEnter={this.check}
+								onKeyDown={handleKeyDown}
 							/>
 							<Icon
 								type="check"

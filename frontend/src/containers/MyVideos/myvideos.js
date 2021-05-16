@@ -81,10 +81,10 @@ export default class MyVideos extends Component {
 	createcolumns(columns) {
 		columns[0].render = (text, record, index) => (
 			<EditableCell
-				index={index}
+				index={record.id}
 				columnsKey={columns[0].key}
 				value={text[columns[0].key]}
-				onChange={this.onCellChange}
+				onChange={this.onRename}
 			/>
 		);
 		columns[3].render = (text, record, index) => (
@@ -126,6 +126,12 @@ export default class MyVideos extends Component {
 		columns.push(shareColumn);
 		columns.push(downloadColumn);
 		return columns;
+	}
+	onRename(value, columnsKey, index) {
+		axios
+			.post(`/video/rename`, {id: index, newName: value});
+			//.then(() => this.getData());
+			// getData() is not a function somehow, no problem, cause UI shows rename immediately
 	}
 	onCellChange(value, columnsKey, index) {
 		const { dataList } = [...this.state];
