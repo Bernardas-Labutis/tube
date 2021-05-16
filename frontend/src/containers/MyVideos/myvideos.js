@@ -22,6 +22,7 @@ import Dropzone from "../../components/uielements/dropzone";
 import DropzoneWrapper from "../../containers/AdvancedUI/dropzone/dropzone.style";
 import { notification } from "../../components";
 import FormData from "form-data";
+import checkforHeader from '../../axiosheader'
 
 export default class MyVideos extends Component {
 	constructor(props) {
@@ -46,6 +47,7 @@ export default class MyVideos extends Component {
 
 	getData() {
 		let data = [];
+		checkforHeader();
 		axios
 			.get("/video/userAvailable", {})
 			.then((response) => {
@@ -64,6 +66,7 @@ export default class MyVideos extends Component {
 
 	getVideoUrl(videoId) {
 		let videoUrl = "";
+		checkforHeader();
 		axios
 			.get("/video/viewingUrl/" + videoId)
 			.then((response) => {
@@ -128,6 +131,7 @@ export default class MyVideos extends Component {
 		return columns;
 	}
 	onRename(value, columnsKey, index) {
+		checkforHeader();
 		axios
 			.post(`/video/rename`, {id: index, newName: value});
 			//.then(() => this.getData());
@@ -139,11 +143,13 @@ export default class MyVideos extends Component {
 		this.setState({ dataList });
 	}
 	onDeleteCell = (index) => {
+		checkforHeader();
 		axios
 			.get(`/video/soft-delete/${index}`)
 			.then(() => this.getData());
 	};
 	onDownloadCell = (index) => {
+		checkforHeader();
 		axios
 			.get(`/video/download/${index}`)
 			.then((response) => {
@@ -162,6 +168,7 @@ export default class MyVideos extends Component {
 		formData.append("fileName", fileName);
 		formData.append("fileSize", 50);
 		formData.append("file", file);
+		checkforHeader();
 		return axios
 			.post("/video/upload", formData)
 			.then((response) => {

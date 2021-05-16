@@ -7,6 +7,7 @@ import IntlMessages from '../../components/utility/intlMessages';
 import SignUpStyleWrapper from './signup.style';
 import authAction from '../../redux/auth/actions';
 import axios from 'axios';
+import checkforHeader from '../../axiosheader';
 
 const { login } = authAction;
 
@@ -32,6 +33,7 @@ class SignUp extends React.Component {
 
   registerCall() {
     if(this.state.password == this.state.passwordConfirm){
+      checkforHeader();
       axios.post('/api/v1/registration', {
         "firstName": this.state.firstName,
         "lastName": this.state.lastName,

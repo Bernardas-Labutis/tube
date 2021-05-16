@@ -2,6 +2,7 @@
 import React, { Component } from "react";
 import axios from "axios";
 import { Icon, Input, Popconfirm } from "antd";
+import checkforHeader from '../../axiosheader';
 
 export default class TubeShareCell extends Component {
 	constructor(props) {
@@ -58,6 +59,7 @@ export default class TubeShareCell extends Component {
 						this.setState({
 							deleting: true
 						});
+						checkforHeader();
 						axios
 							.delete(`/video/share/${this.state.shareId}`)
 							.then((response) => {
@@ -90,6 +92,7 @@ export default class TubeShareCell extends Component {
 							deleted: false,
 							deleting: false
 						});
+						checkforHeader();
 						axios
 							.get(`/video/share/${index}`)
 							.then((response) => {
