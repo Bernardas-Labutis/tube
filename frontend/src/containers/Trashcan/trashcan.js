@@ -72,14 +72,6 @@ export default class Trashcan extends Component {
 	}
 
 	createcolumns(columns) {
-		columns[0].render = (text, record, index) => (
-			<EditableCell
-				index={index}
-				columnsKey={columns[0].key}
-				value={text[columns[0].key]}
-				onChange={this.onCellChange}
-			/>
-		);
 		const deleteColumn = {
 			title: "",
 			dataIndex: "delete",
