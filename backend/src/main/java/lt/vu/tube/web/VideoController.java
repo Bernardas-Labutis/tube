@@ -13,6 +13,7 @@ import lt.vu.tube.repository.AppUserRepository;
 import lt.vu.tube.repository.CurrentUserVideoDAO;
 import lt.vu.tube.repository.VideoRepository;
 import lt.vu.tube.repository.VideoShareLinkRepository;
+import lt.vu.tube.requests.RenameRequest;
 import lt.vu.tube.response.VideoDownloadResponse;
 import lt.vu.tube.response.VideoStorageResponse;
 import lt.vu.tube.response.VideoUploadResponse;
@@ -37,7 +38,6 @@ import software.amazon.awssdk.awscore.exception.AwsServiceException;
 
 import javax.persistence.EntityManager;
 import javax.servlet.http.HttpServletRequest;
-import javax.transaction.Transactional;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Timestamp;
@@ -55,6 +55,12 @@ public class VideoController {
     @Autowired
     VideoConfig videoConfig;
     @Autowired
+    AuthenticatedUser authenticatedUser;
+    @Autowired
+    CurrentUserVideoDAO currentUserVideoDAO;
+    @Autowired
+    VideoShareLinkRepository videoShareLinkRepository;
+    @Autowired
     private AWSS3Utils s3Utils;
     @Autowired
     private AWSCloudFrontUtils cloudFrontUtils;
@@ -66,12 +72,6 @@ public class VideoController {
     private AWSLambdaUtils lambdaUtils;
     @Autowired
     private AppUserRepository appUserRepository;
-    @Autowired
-    AuthenticatedUser authenticatedUser;
-    @Autowired
-    CurrentUserVideoDAO currentUserVideoDAO;
-    @Autowired
-    VideoShareLinkRepository videoShareLinkRepository;
 
     @RequestMapping(value = "/upload")
     @PreAuthorize("hasAnyRole('ROLE_USER')")
@@ -395,11 +395,11 @@ public class VideoController {
 
     @RequestMapping("/userStorage")
     @PreAuthorize("hasAuthority('user:read')")
-    public ResponseEntity<VideoStorageResponse> getCurrentUserUsedBytes(){
+    public ResponseEntity<VideoStorageResponse> getCurrentUserUsedBytes() {
         AppUser currentUser = authenticatedUser.getAuthenticatedUser();
-        if (currentUser==null){
+        if (currentUser == null) {
             return new ResponseEntity<>(new VideoStorageResponse(), HttpStatus.UNAUTHORIZED);
-        } else{
+        } else {
             return new ResponseEntity<>(new VideoStorageResponse(currentUser.getUsedStorage(), currentUser.getMaxStorage()), HttpStatus.OK);
         }
     }
@@ -422,6 +422,7 @@ public class VideoController {
             return new ResponseEntity<>(video.getVideoShareLink().getId(), HttpStatus.OK);
         }
     }
+
     //Trina per shareId
     @DeleteMapping("/share/{shareId}")
     @PreAuthorize("hasAnyRole('ROLE_USER')")
@@ -444,11 +445,9 @@ public class VideoController {
         VideoShareLink link = videoShareLinkRepository.findById(id).orElse(null);
         if (link == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-        else if (link.getVideo().getStatus() != VideoStatusEnum.AVAILABLE) {
+        } else if (link.getVideo().getStatus() != VideoStatusEnum.AVAILABLE) {
             return new ResponseEntity<>(HttpStatus.FORBIDDEN);
-        }
-        else {
+        } else {
             Video video = link.getVideo();
             String viewUrl;
             String downloadUrl;
@@ -481,6 +480,22 @@ public class VideoController {
                     viewUrl,
                     downloadUrl
             ), HttpStatus.OK);
+        }
+    }
+
+    @PostMapping("/rename")
+    @PreAuthorize("hasAnyRole('ROLE_USER')")
+    public ResponseEntity<UUID> rename(@RequestBody RenameRequest request) {
+        AppUser currentUser = authenticatedUser.getAuthenticatedUser();
+        Video video = videoRepository.findById(request.getId()).orElse(null);
+        if (video == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        } else if (video.getOwner() == null || !video.getOwner().equals(currentUser)) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        } else {
+            video.setFileName(request.getNewName());
+            videoRepository.save(video);
+            return new ResponseEntity<>(request.getId(), HttpStatus.OK);
         }
     }
 }
