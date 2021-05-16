@@ -17,7 +17,7 @@ import SingleProgressWidget from "../../../src/containers/Widgets/progress/progr
 import IsoWidgetsWrapper from "../../../src/containers/Widgets/widgets-wrapper";
 import prettyBytes from "pretty-bytes";
 import basicStyle from "../../config/basicStyle";
-import '../../axiosheader';
+import checkforHeader from '../../axiosheader';
 
 const SubMenu = Menu.SubMenu;
 const MenuItemGroup = Menu.ItemGroup;
@@ -53,6 +53,7 @@ class Sidebar extends Component {
 	}
 
 	getStorageData() {
+		checkforHeader();
 		axios
 			.get("/video/userStorage")
 			.then((response) => {
