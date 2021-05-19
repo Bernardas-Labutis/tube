@@ -24,7 +24,7 @@ public class VideoDTO {
     private DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss ", Locale.ENGLISH);
 
     public VideoDTO(String id, String key, String title, Timestamp uploadTime, Long size, boolean isPublic) {
-        this( id,  key,  title,  uploadTime,  size,  isPublic, null);
+        this(id, key, title, uploadTime, size, isPublic, null);
     }
 
     public VideoDTO(String id, String key, String title, Timestamp uploadTime, Long size, boolean isPublic, String ownerUsername) {
@@ -34,6 +34,6 @@ public class VideoDTO {
         this.uploadTime = uploadTime.toLocalDateTime().format(formatter);
         this.size = FileUtils.byteCountToDisplaySize(size);
         privacy = isPublic ? "Public" : "Private";
-        this.ownerUsername =ownerUsername;
+        this.ownerUsername = ownerUsername;
     }
 }
