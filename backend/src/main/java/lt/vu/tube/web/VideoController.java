@@ -498,4 +498,19 @@ public class VideoController {
             return new ResponseEntity<>(request.getId(), HttpStatus.OK);
         }
     }
+
+    @GetMapping("/publicAvailable")
+    @PreAuthorize("hasAuthority('user:read')")
+    public List<VideoDTO> getAllPublicAvailableVideos() throws IOException {
+        return StreamSupport.stream(videoRepository.findVideosByStatusAndIsPublic(VideoStatusEnum.AVAILABLE.name(), true).spliterator(), false)
+                .map(video -> new VideoDTO(
+                        video.getId().toString(),
+                        video.getId().toString(),
+                        video.getFileName(),
+                        video.getCreated(),
+                        video.getFileSize(),
+                        video.getPublic(),
+                        video.getOwner().getUsername()))
+                .collect(Collectors.toList());
+    }
 }
