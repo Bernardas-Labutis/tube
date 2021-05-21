@@ -21,6 +21,7 @@ import lt.vu.tube.services.AuthenticatedUser;
 import lt.vu.tube.util.AWSCloudFrontUtils;
 import lt.vu.tube.util.AWSLambdaUtils;
 import lt.vu.tube.util.AWSS3Utils;
+import lt.vu.tube.web.mapper.VideoMapper;
 import org.apache.tika.mime.MimeType;
 import org.apache.tika.mime.MimeTypeException;
 import org.apache.tika.mime.MimeTypes;
@@ -239,13 +240,7 @@ public class VideoController {
     public List<VideoDTO> getSoftDeleted() {
         return StreamSupport.stream(currentUserVideoDAO.getCurrentUserSoftDeletedVideos().spliterator(), false)
                 .filter(video -> video.getStatus() == VideoStatusEnum.SOFT_DELETED)
-                .map(video -> new VideoDTO(
-                        video.getId().toString(),
-                        video.getId().toString(),
-                        video.getFileName(),
-                        video.getCreated(),
-                        video.getFileSize(),
-                        video.getPublic()))
+                .map(VideoMapper::mapToVideoDto)
                 .collect(Collectors.toList());
     }
 
@@ -357,13 +352,7 @@ public class VideoController {
     @PreAuthorize("hasAuthority('user:read')")
     public List<VideoDTO> getAllCurrentUserAvailableVideos() throws IOException {
         return StreamSupport.stream(currentUserVideoDAO.getCurrentUserAvailableVideos().spliterator(), false)
-                .map(video -> new VideoDTO(
-                        video.getId().toString(),
-                        video.getId().toString(),
-                        video.getFileName(),
-                        video.getCreated(),
-                        video.getFileSize(),
-                        video.getPublic()))
+                .map(VideoMapper::mapToVideoDto)
                 .collect(Collectors.toList());
     }
 
@@ -492,6 +481,8 @@ public class VideoController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         } else if (video.getOwner() == null || !video.getOwner().equals(currentUser)) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        } else if (!video.getVersion().equals(request.getVersion())) {
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
         } else {
             video.setFileName(request.getNewName());
             videoRepository.save(video);
@@ -503,14 +494,17 @@ public class VideoController {
     @PreAuthorize("hasAuthority('user:read')")
     public List<VideoDTO> getAllPublicAvailableVideos() throws IOException {
         return StreamSupport.stream(videoRepository.findVideosByStatusAndIsPublic(VideoStatusEnum.AVAILABLE.name(), true).spliterator(), false)
-                .map(video -> new VideoDTO(
-                        video.getId().toString(),
-                        video.getId().toString(),
-                        video.getFileName(),
-                        video.getCreated(),
-                        video.getFileSize(),
-                        video.getPublic(),
-                        video.getOwner().getUsername()))
+                .map(VideoMapper::mapToVideoDto)
                 .collect(Collectors.toList());
+    }
+
+    @GetMapping("/userAvailable/{id}")
+    @PreAuthorize("hasAuthority('user:read')")
+    public ResponseEntity<VideoDTO> getCurrentUserAvailableVideoById(@PathVariable UUID id) {
+        Video video = videoRepository.findVideoByOwnerAndStatusAndId(authenticatedUser.getAuthenticatedUser(), VideoStatusEnum.AVAILABLE.name(), id);
+        if (video == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(VideoMapper.mapToVideoDto(video), HttpStatus.OK);
     }
 }

@@ -11,5 +11,8 @@ import java.util.UUID;
 @Repository
 public interface VideoRepository extends CrudRepository<Video, UUID> {
     Iterable<Video> findVideosByOwner(AppUser owner);
-    List<Video>  findVideosByStatusAndIsPublic(String status, boolean isPublic);
+
+    List<Video> findVideosByStatusAndIsPublic(String status, boolean isPublic);
+
+    Video findVideoByOwnerAndStatusAndId(AppUser owner, String status, UUID id);
 }

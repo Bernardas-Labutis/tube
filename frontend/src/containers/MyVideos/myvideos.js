@@ -22,7 +22,17 @@ import Dropzone from "../../components/uielements/dropzone";
 import DropzoneWrapper from "../../containers/AdvancedUI/dropzone/dropzone.style";
 import { notification } from "../../components";
 import FormData from "form-data";
-import checkforHeader from '../../axiosheader'
+import checkforHeader from "../../axiosheader";
+import { dataList } from "../Tables/antTables";
+import Modals from "../../components/feedback/modal";
+import ModalStyle, { ModalContent } from "../Feedback/Modal/modal.style";
+import WithDirection from "../../../src/config/withDirection";
+
+const isoModal = ModalStyle(Modals);
+const Modal = WithDirection(isoModal);
+
+const confirm = Modals.confirm;
+const cancelTokenSource = axios.CancelToken.source();
 
 export default class MyVideos extends Component {
 	constructor(props) {
@@ -30,6 +40,8 @@ export default class MyVideos extends Component {
 		this.onCellChange = this.onCellChange.bind(this);
 		this.onDeleteCell = this.onDeleteCell.bind(this);
 		this.onDownloadCell = this.onDownloadCell.bind(this);
+		this.onRename = this.onRename.bind(this);
+		this.getNewestVideoVersion = this.getNewestVideoVersion.bind(this);
 		this.state = {
 			columns: this.createcolumns(clone(tableinfos[0].columns)),
 			dataList: [],
@@ -38,6 +50,10 @@ export default class MyVideos extends Component {
 			isUploadButtonEnabled: false,
 			addedFile: null,
 			dropzone: null,
+			renamedColumn: {
+				id: "",
+				name: "",
+			},
 		};
 		this.openModal = this.openModal.bind(this);
 	}
@@ -48,33 +64,25 @@ export default class MyVideos extends Component {
 	getData() {
 		let data = [];
 		checkforHeader();
-		axios
-			.get("/video/userAvailable", {})
-			.then((response) => {
-				console.log(response);
-				data = response.data;
-				console.log(data);
-				if (data.length === 0) {
-					this.setState({ dataList: [] });
-				} else {
-					this.setState({
-						dataList: new dataMagic(data.length, data).getAll(),
-					});
-				}
-			});
+		axios.get("/video/userAvailable", {}).then((response) => {
+			data = response.data;
+			if (data.length === 0) {
+				this.setState({ dataList: [] });
+			} else {
+				let dataList = new dataMagic(data.length, data).getAll();
+				this.setState({ dataList });
+			}
+		});
 	}
 
 	getVideoUrl(videoId) {
 		let videoUrl = "";
 		checkforHeader();
-		axios
-			.get("/video/viewingUrl/" + videoId)
-			.then((response) => {
-				console.log(response);
-				this.setState({
-					videoUrl: response.data,
-				});
+		axios.get("/video/viewingUrl/" + videoId).then((response) => {
+			this.setState({
+				videoUrl: response.data,
 			});
+		});
 	}
 
 	componentDidMount() {
@@ -112,7 +120,7 @@ export default class MyVideos extends Component {
 			title: "Actions",
 			dataIndex: "share",
 			render: (text, record, index) => (
-				<TubeShareCell index={record.id}/>
+				<TubeShareCell index={record.id} />
 			),
 		};
 		const downloadColumn = {
@@ -132,11 +140,58 @@ export default class MyVideos extends Component {
 	}
 	onRename(value, columnsKey, index) {
 		checkforHeader();
+		let rowValue = this.state.dataList.find((record) => record.id == index);
+		this.state.renamedColumn = {
+			id: index,
+			name: value,
+		};
 		axios
-			.post(`/video/rename`, {id: index, newName: value});
-			//.then(() => this.getData());
-			// getData() is not a function somehow, no problem, cause UI shows rename immediately
+			.post(`/video/rename`, {
+				id: index,
+				newName: value,
+				version: rowValue.version,
+				cancelToken: cancelTokenSource.token,
+			})
+			.catch((error) => {
+				if (error.response) {
+					if (error.response.status == 409) {
+						this.showConfirm(this);
+					}
+				}
+				cancelTokenSource.cancel();
+			})
+			.then(() => {
+				this.getData();
+			});
+		// getData() is not a function somehow, no problem, cause UI shows rename immediately
 	}
+
+	async renameVideo(id, name, version) {
+		return axios
+			.post(`/video/rename`, {
+				id: id,
+				newName: name,
+				version: version,
+				cancelToken: cancelTokenSource.token,
+			})
+			.catch((error) => {
+				if (error.response) {
+					if (error.response.status == 409) {
+						this.showConfirm(this);
+					}
+				}
+				cancelTokenSource.cancel();
+			})
+			.then(() => this.getData);
+	}
+
+	getNewestVideoVersion(videoId) {
+		checkforHeader();
+		return axios.get("/video/userAvailable/" + videoId).then((response) => {
+			return response.data.version;
+		});
+	}
+
 	onCellChange(value, columnsKey, index) {
 		const { dataList } = [...this.state];
 		dataList[index][columnsKey] = value;
@@ -144,24 +199,18 @@ export default class MyVideos extends Component {
 	}
 	onDeleteCell = (index) => {
 		checkforHeader();
-		axios
-			.get(`/video/soft-delete/${index}`)
-			.then(() => this.getData());
+		axios.get(`/video/soft-delete/${index}`).then(() => this.getData());
 	};
 	onDownloadCell = (index) => {
 		checkforHeader();
-		axios
-			.get(`/video/download/${index}`)
-			.then((response) => {
-				const link = document.createElement("a");
-				link.href = response.data.url;
-				document.body.appendChild(link);
-				link.click();
-			});
+		axios.get(`/video/download/${index}`).then((response) => {
+			const link = document.createElement("a");
+			link.href = response.data.url;
+			document.body.appendChild(link);
+			link.click();
+		});
 	};
-	upload(file) {
-		console.log("added file");
-		console.log(this.state.addedFile);
+	async upload(file) {
 		const formData = new FormData();
 		let fileName =
 			file.name.substring(0, file.name.lastIndexOf(".")) || file.name;
@@ -169,16 +218,13 @@ export default class MyVideos extends Component {
 		formData.append("fileSize", 50);
 		formData.append("file", file);
 		checkforHeader();
-		return axios
-			.post("/video/upload", formData)
-			.then((response) => {
-				notification("success", `${file.name} successfully uploaded`),
-					this.setState({
-						isUploadButtonEnabled: false,
-					}),
-					console.log(response);
+		return axios.post("/video/upload", formData).then((response) => {
+			notification("success", `${file.name} successfully uploaded`),
+				this.setState({
+					isUploadButtonEnabled: false,
+				}),
 				this.removeFile();
-			});
+		});
 	}
 	render() {
 		const componentConfig = {
@@ -201,7 +247,6 @@ export default class MyVideos extends Component {
 			addedfile: (file) => {
 				notification("success", `${file.name} added`);
 				this.setState({ isUploadButtonEnabled: true, addedFile: file });
-				console.log(file);
 			},
 			success: (file) =>
 				notification("success", `${file.name} successfully uploaded`),
@@ -276,8 +321,6 @@ export default class MyVideos extends Component {
 		);
 	}
 	initCallback(dropzone) {
-		console.log(dropzone);
-		console.log("initCallback called");
 		this.state.dropzone = dropzone;
 		dropzone.on("addedfile", function (file) {
 			if (this.files.length > 1) {
@@ -288,8 +331,6 @@ export default class MyVideos extends Component {
 
 	removeFile() {
 		if (this.state.dropzone) {
-			console.log(this.state.dropzone);
-			console.log("removeFile called");
 			this.state.dropzone.removeAllFiles();
 		}
 	}
@@ -297,5 +338,30 @@ export default class MyVideos extends Component {
 	async uploadAndRefresh(file) {
 		await this.upload(file);
 		this.getData();
+	}
+
+	showConfirm(outerThis) {
+		confirm({
+			title: "Woops, seems you've already edited this video's name in another window.",
+			content:
+				"Do you want to force your changes, or reload and look at the new ones?",
+			async onOk() {
+				let newestVideoVersion = await outerThis.getNewestVideoVersion(
+					outerThis.state.renamedColumn.id
+				);
+				outerThis.renameVideo(
+					outerThis.state.renamedColumn.id,
+					outerThis.state.renamedColumn.name,
+					newestVideoVersion
+				);
+			},
+			onCancel() {
+				window.location.replace(
+					"http://localhost:3000/dashboard/my-videos"
+				);
+			},
+			okText: "Force",
+			cancelText: "Reload",
+		});
 	}
 }
