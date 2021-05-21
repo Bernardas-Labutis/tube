@@ -39,6 +39,9 @@ public class Video {
     @OneToOne(cascade = CascadeType.ALL)
     private VideoShareLink videoShareLink;
 
+    @Version
+    private Integer version = 0;
+
     public UUID getId() {
         return id;
     }
@@ -129,5 +132,13 @@ public class Video {
 
     public void setVideoShareLink(VideoShareLink videoShareLink) {
         this.videoShareLink = videoShareLink;
+    }
+
+    public Integer getVersion() {
+        return version;
+    }
+
+    public void setVersion(Integer version) {
+        this.version = version;
     }
 }
