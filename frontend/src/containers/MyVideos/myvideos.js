@@ -69,17 +69,7 @@ export default class MyVideos extends Component {
 			if (data.length === 0) {
 				this.setState({ dataList: [] });
 			} else {
-				// turi state
-				// setState(naujasState); < sitas neturetu veikt;
-
-				// const newState = { ...this.state };
-				// newState.dataList = new dataMagic(data.length, data).getAll();
-				// this.setState(newState); < neveikia
-
-				// const state = ...this.state;
-
-				let { dataList } = [...this.state];
-				dataList = new dataMagic(data.length, data).getAll();
+				let dataList = new dataMagic(data.length, data).getAll();
 				this.setState({ dataList });
 			}
 		});
