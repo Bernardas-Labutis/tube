@@ -17,10 +17,7 @@ import lt.vu.tube.requests.RenameRequest;
 import lt.vu.tube.response.VideoDownloadResponse;
 import lt.vu.tube.response.VideoStorageResponse;
 import lt.vu.tube.response.VideoUploadResponse;
-import lt.vu.tube.services.AuthenticatedUser;
-import lt.vu.tube.util.AWSCloudFrontUtils;
-import lt.vu.tube.util.AWSLambdaUtils;
-import lt.vu.tube.util.AWSS3Utils;
+import lt.vu.tube.services.*;
 import lt.vu.tube.web.mapper.VideoMapper;
 import org.apache.tika.mime.MimeType;
 import org.apache.tika.mime.MimeTypeException;
@@ -62,15 +59,15 @@ public class VideoController {
     @Autowired
     VideoShareLinkRepository videoShareLinkRepository;
     @Autowired
-    private AWSS3Utils s3Utils;
+    private StorageService storageService;
     @Autowired
-    private AWSCloudFrontUtils cloudFrontUtils;
+    private ContentDeliveryService contentDeliveryService;
     @Autowired
     private EntityManager entityManager;
     @Autowired
     private VideoRepository videoRepository;
     @Autowired
-    private AWSLambdaUtils lambdaUtils;
+    private FunctionService functionService;
     @Autowired
     private AppUserRepository appUserRepository;
 
@@ -131,7 +128,7 @@ public class VideoController {
                 //Start upload
                 video.setPath("videos/" + video.getId().toString());
                 video.setMime(item.getHeaders().getHeader("content-type")); //Later update this after upload by extracting metadata
-                var response = s3Utils.createMultipartUpload(video.getPath(), item.getHeaders().getHeader("content-type"));
+                var response = storageService.createMultipartUpload(video.getPath(), item.getHeaders().getHeader("content-type"));
                 video.setStatus(VideoStatusEnum.UPLOADING);
                 video = videoRepository.save(video);
 
@@ -143,27 +140,27 @@ public class VideoController {
                         if (bytes.length != 0) {
                             fileLength += bytes.length;
                             if (user.getMaxStorage() < user.getUsedStorage() + fileLength) {
-                                s3Utils.abortMultipartUpload(response.uploadId());
+                                storageService.abortMultipartUpload(response.uploadId());
                                 video.setStatus(VideoStatusEnum.UPLOAD_FAILED);
                                 video = videoRepository.save(video);
                                 logger.log(Level.INFO, String.format("Failed to upload video, reported filesize didn't match the real one and user didn't have enoug space. (reported: %d)", reportedFileSize));
                                 return new ResponseEntity<>(VideoUploadResponse.fail("Not enough space in storage"), HttpStatus.FORBIDDEN);
 
                             }
-                            s3Utils.uploadPart(response.uploadId(), bytes);
+                            storageService.uploadPart(response.uploadId(), bytes);
                         }
                     } while (bytes.length != 0);
                     //Finish upload
-                    s3Utils.completeMultipartUpload(response.uploadId());
+                    storageService.completeMultipartUpload(response.uploadId());
                     video.setFileSize(fileLength);
                     video.setStatus(VideoStatusEnum.PROCESSING);
                     video = videoRepository.save(video);
                     LambdaResponse<MediaTypeResponseBody> mediaTypeResponse;
                     try {
-                        mediaTypeResponse = lambdaUtils.getMediaType(video.getPath());
+                        mediaTypeResponse = functionService.getMediaType(video.getPath());
                     } catch (Exception exception) {
                         logger.log(Level.SEVERE, "getMediaType failed with exception: " + exception.getMessage(), exception);
-                        s3Utils.deleteFile(video.getPath());
+                        storageService.deleteFile(video.getPath());
                         video.setStatus(VideoStatusEnum.INVALID);
                         video = videoRepository.save(video);
                         return new ResponseEntity<>(VideoUploadResponse.fail("Failed to process the video"), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -178,14 +175,14 @@ public class VideoController {
                             video = videoRepository.save(video);
                         } else {
                             logger.log(Level.INFO, "Failed to upload video, invalid type: " + mediaTypeResponse.getBody().getMediaType());
-                            s3Utils.deleteFile(video.getPath());
+                            storageService.deleteFile(video.getPath());
                             video.setStatus(VideoStatusEnum.INVALID);
                             video = videoRepository.save(video);
                             return new ResponseEntity<>(VideoUploadResponse.fail("Invalid video file type"), HttpStatus.BAD_REQUEST);
                         }
                     } else {
                         logger.log(Level.SEVERE, "getMediaType failed with error message: " + mediaTypeResponse.getBody().getMessage());
-                        s3Utils.deleteFile(video.getPath());
+                        storageService.deleteFile(video.getPath());
                         video.setStatus(VideoStatusEnum.INVALID);
                         video = videoRepository.save(video);
                         return new ResponseEntity<>(VideoUploadResponse.fail("Failed to process the video"), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -193,13 +190,13 @@ public class VideoController {
 
                 } catch (AwsServiceException exception) {
                     //Something happened abort to cleanup
-                    s3Utils.abortMultipartUpload(response.uploadId());
+                    storageService.abortMultipartUpload(response.uploadId());
                     video.setStatus(VideoStatusEnum.UPLOAD_FAILED);
                     video = videoRepository.save(video);
                     logger.log(Level.SEVERE, "Failed to upload: " + exception.getMessage(), exception);
                     return new ResponseEntity<>(VideoUploadResponse.fail("Failed to store the video"), HttpStatus.INTERNAL_SERVER_ERROR);
                 }
-                logger.info("Video uploaded: " + cloudFrontUtils.getSignedUrl(video.getPath(), 3600));
+                logger.info("Video uploaded: " + contentDeliveryService.getSignedUrl(video.getPath(), 3600));
             }
         }
         if (!neededParams.isEmpty()) {
@@ -297,7 +294,7 @@ public class VideoController {
                     .filename(video.getFileName() + extension)
                     .build();
             try {
-                String url = cloudFrontUtils.getSignedUrl(video.getPath(), Map.of("response-content-disposition", contentDisposition.toString()), 3600);
+                String url = contentDeliveryService.getSignedUrl(video.getPath(), Map.of("response-content-disposition", contentDisposition.toString()), 3600);
                 return new ResponseEntity<>(VideoDownloadResponse.success("Success", url), HttpStatus.OK);
             } catch (Exception e) {
                 logger.log(Level.SEVERE, "Error while trying to sign a download url for " + id, e);
@@ -320,7 +317,7 @@ public class VideoController {
     @RequestMapping("/type")
     @PreAuthorize("hasAnyRole('ROLE_USER')")
     public LambdaResponse<MediaTypeResponseBody> getData(@RequestParam String key) throws Exception {
-        return lambdaUtils.getMediaType(key);
+        return functionService.getMediaType(key);
     }
 
     //Temporary delete later
@@ -352,7 +349,7 @@ public class VideoController {
         return StreamSupport.stream(videoRepository.findAll().spliterator(), false)
                 .collect(Collectors.toMap(Video::getId, v -> {
                     try {
-                        return cloudFrontUtils.getSignedUrl(v.getPath(), 3600);
+                        return contentDeliveryService.getSignedUrl(v.getPath(), 3600);
                     } catch (Exception e) {
                         e.printStackTrace();
                         return "";
@@ -383,7 +380,7 @@ public class VideoController {
             }
 
             try {
-                String url = cloudFrontUtils.getSignedUrl(video.getPath(), 3600);
+                String url = contentDeliveryService.getSignedUrl(video.getPath(), 3600);
                 return new ResponseEntity<>(url, HttpStatus.OK);
             } catch (Exception e) {
                 logger.log(Level.SEVERE, "Error while trying to sign a viewing url for " + id, e);
@@ -465,8 +462,8 @@ public class VideoController {
                     .filename(video.getFileName() + extension)
                     .build();
             try {
-                viewUrl = cloudFrontUtils.getSignedUrl(video.getPath(), 3600);
-                downloadUrl = cloudFrontUtils.getSignedUrl(video.getPath(), Map.of("response-content-disposition", contentDisposition.toString()), 3600);
+                viewUrl = contentDeliveryService.getSignedUrl(video.getPath(), 3600);
+                downloadUrl = contentDeliveryService.getSignedUrl(video.getPath(), Map.of("response-content-disposition", contentDisposition.toString()), 3600);
             } catch (Exception e) {
                 logger.log(Level.SEVERE, "Error while trying to sign a urls for " + video.getId(), e);
                 return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);

@@ -1,9 +1,9 @@
-package lt.vu.tube.util;
+package lt.vu.tube.services;
 
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lt.vu.tube.config.AWSConfig;
+import lt.vu.tube.util.AWSUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Base64Utils;
@@ -18,7 +18,7 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.*;
 
 @Component
-public class AWSCloudFrontUtils {
+public class AWSCloudFrontServiceImpl implements ContentDeliveryService {
 
     @Autowired
     private AWSConfig awsConfig;
@@ -44,12 +44,13 @@ public class AWSCloudFrontUtils {
                 .id(awsConfig.getDistributionID())
                 .build()).distribution().domainName();
     }
-
+    @Override
     public String getSignedUrl(String path, Integer expiration) throws Exception {
         return getSignedUrl(path, null, expiration);
     }
 
     //AWS java 2.0 neturi signing utility tai darau pats
+    @Override
     public String getSignedUrl(String path, Map<String, String> params, Integer expiration) throws Exception {
         Long expirationDate = System.currentTimeMillis() / 1000 + expiration;
         String baseUrl = String.format("https://%s/%s", distributionDomainName, path);

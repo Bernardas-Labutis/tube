@@ -1,4 +1,4 @@
-package lt.vu.tube.util;
+package lt.vu.tube.services;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lt.vu.tube.config.AWSConfig;
 import lt.vu.tube.model.LambdaResponse;
 import lt.vu.tube.model.MediaTypeResponseBody;
+import lt.vu.tube.util.AWSUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.core.SdkBytes;
@@ -14,10 +15,9 @@ import software.amazon.awssdk.services.lambda.model.InvokeRequest;
 import software.amazon.awssdk.services.lambda.model.InvokeResponse;
 
 import javax.annotation.PostConstruct;
-import java.util.logging.Logger;
 
 @Component
-public class AWSLambdaUtils {
+public class AWSLambdaServiceImpl implements FunctionService {
 
     @Autowired
     private AWSConfig awsConfig;
@@ -35,6 +35,7 @@ public class AWSLambdaUtils {
     }
 
     //Key yra path to file
+    @Override
     public LambdaResponse<MediaTypeResponseBody> getMediaType(String key) throws JsonProcessingException {
         String payloadJSON = objectMapper.writeValueAsString(new MediaTypeRequest(key));
         InvokeRequest request = InvokeRequest.builder()
