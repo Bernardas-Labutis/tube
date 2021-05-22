@@ -17,7 +17,7 @@ import software.amazon.awssdk.services.lambda.model.InvokeResponse;
 import javax.annotation.PostConstruct;
 
 @Component
-public class AWSLambdaServiceImpl implements FunctionService {
+public class AWSLambdaFunctionServiceImpl implements FunctionService {
 
     @Autowired
     private AWSConfig awsConfig;
