@@ -19,9 +19,9 @@ import java.util.*;
 import java.util.logging.Logger;
 
 @Component
-public class AWSCloudFrontServiceImpl implements ContentDeliveryService {
+public class AWSCloudFrontContentDeliveryServiceImpl implements ContentDeliveryService {
 
-    private static final Logger logger = Logger.getLogger(AWSCloudFrontServiceImpl.class.toString());
+    private static final Logger logger = Logger.getLogger(AWSCloudFrontContentDeliveryServiceImpl.class.toString());
 
     @Autowired
     private AWSConfig awsConfig;
@@ -30,7 +30,6 @@ public class AWSCloudFrontServiceImpl implements ContentDeliveryService {
     private CloudFrontClient cloudFrontClient;
     private PrivateKey privateKey;
     private ObjectMapper objectMapper;
-
 
     @PostConstruct
     private void init() throws Exception {
@@ -49,6 +48,7 @@ public class AWSCloudFrontServiceImpl implements ContentDeliveryService {
                 .id(awsConfig.getDistributionID())
                 .build()).distribution().domainName();
     }
+
     @Override
     public String getSignedUrl(String path, Integer expiration) throws Exception {
         return getSignedUrl(path, null, expiration);

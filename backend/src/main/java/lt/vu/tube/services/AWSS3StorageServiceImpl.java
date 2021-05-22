@@ -12,7 +12,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Component
-public class AWSS3ServiceImpl implements StorageService {
+public class AWSS3StorageServiceImpl implements StorageService {
 
     @Autowired
     private AWSConfig awsConfig;
