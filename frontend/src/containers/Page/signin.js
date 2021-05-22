@@ -6,7 +6,6 @@ import Button from '../../components/uielements/button';
 import authAction from '../../redux/auth/actions';
 import IntlMessages from '../../components/utility/intlMessages';
 import SignInStyleWrapper from './signin.style';
-import axios from 'axios';
 import '../../axiosheader';
 
 const { login } = authAction;
@@ -26,25 +25,6 @@ class SignIn extends Component {
       this.setState({ redirectToReferrer: true });
     }
   }
-
-  // loginCall() {
-  //   axios.post('/login', {
-  //     "username": this.state.username,
-  //     "password": this.state.password
-  //   }).then((response) =>{
-  //     if(response.status == 200){
-  //       localStorage.setItem('id_token', response.headers.authorization);
-  //       this.props.history.push('/dashboard/my-videos');
-
-  //     } else {
-  //       localStorage.clear();
-  //       this.setState({error: "Somethings wrong"});
-  //     }
-  //   });
-
-    
-  // }
-
 
   handleLogin = () => {
     const { login } = this.props;
@@ -66,7 +46,7 @@ class SignIn extends Component {
           <div className="isoLoginContent">
             <div className="isoLogoWrapper">
               <Link to="/dashboard">
-                <IntlMessages id="page.signInTitle" />
+                TUBE
               </Link>
             </div>
 
@@ -87,9 +67,6 @@ class SignIn extends Component {
               <p>
                 {this.state.error}
               </p>
-              <p className="isoHelperText">
-                <IntlMessages id="page.signInPreview" />
-              </p>
               <div className="isoCenterComponent isoHelperWrapper">
                 <Link to="/signup">
                   <IntlMessages id="page.signInCreateAccount" />
@@ -105,7 +82,7 @@ class SignIn extends Component {
 
 export default connect(
   state => ({
-    isLoggedIn: state.Auth.get('idToken') !== null ? true : false,
+    isLoggedIn: state.Auth.get('idToken') !== null,
   }),
   { login }
 )(SignIn);

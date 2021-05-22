@@ -1,11 +1,6 @@
 import React, { Component } from "react";
 import clone from "clone";
 import TableWrapper from "../../commonStyles/table.style";
-import {
-	DeleteCell,
-	EditableCell,
-	DownloadCell,
-} from "../../commonHelpers/helperCells";
 import { tableinfos } from "./configs";
 import axios from "axios";
 import dataMagic from "../../commonHelpers/dataMagic";
@@ -13,14 +8,8 @@ import "react-modal-video/css/modal-video.min.css";
 import ModalVideo from "react-modal-video";
 import PageHeader from "../../components/utility/pageHeader";
 import LayoutWrapper from "../../components/utility/layoutWrapper";
-import ContentHolder from "../../components/utility/contentHolder";
-import Box from "../../components/utility/box";
-import { Row, Col, Button } from "antd";
+import { Row, Col } from "antd";
 import basicStyle from "../../config/basicStyle";
-import Dropzone from "../../components/uielements/dropzone";
-import DropzoneWrapper from "../AdvancedUI/dropzone/dropzone.style";
-import { notification } from "../../components";
-import FormData from "form-data";
 import checkforHeader from "../../axiosheader";
 
 export default class PublicVideos extends Component {
