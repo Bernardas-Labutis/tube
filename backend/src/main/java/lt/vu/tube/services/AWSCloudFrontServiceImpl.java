@@ -16,9 +16,12 @@ import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.*;
+import java.util.logging.Logger;
 
 @Component
 public class AWSCloudFrontServiceImpl implements ContentDeliveryService {
+
+    private static final Logger logger = Logger.getLogger(AWSCloudFrontServiceImpl.class.toString());
 
     @Autowired
     private AWSConfig awsConfig;
@@ -27,6 +30,8 @@ public class AWSCloudFrontServiceImpl implements ContentDeliveryService {
     private CloudFrontClient cloudFrontClient;
     private PrivateKey privateKey;
     private ObjectMapper objectMapper;
+
+
     @PostConstruct
     private void init() throws Exception {
         cloudFrontClient = CloudFrontClient.builder()
@@ -73,6 +78,8 @@ public class AWSCloudFrontServiceImpl implements ContentDeliveryService {
         String signature = buildSignatureJson(baseUrl, expirationDate);
         //Replace url unsafe chars
         signature = Base64Utils.encodeToString(signString(signature)).replace("+", "-").replace("=", "_").replace("/", "~");
+
+        logger.info(String.format("Url for '%s' signed by %s", path, this.getClass().toString()));
         return String.format("%s%sExpires=%d&Signature=%s&Key-Pair-Id=%s", baseUrl, params == null ? '?' : '&', expirationDate, signature, awsConfig.getPublicKeyId());
     }
 
@@ -108,6 +115,6 @@ public class AWSCloudFrontServiceImpl implements ContentDeliveryService {
                         statement
                 )
         );
-        return new ObjectMapper().writeValueAsString(jsonMap);
+        return objectMapper.writeValueAsString(jsonMap);
     }
 }

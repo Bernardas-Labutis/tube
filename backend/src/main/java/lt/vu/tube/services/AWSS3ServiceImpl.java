@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 public class AWSS3ServiceImpl implements StorageService {
 
     @Autowired
-    AWSConfig awsConfig;
+    private AWSConfig awsConfig;
 
     private S3Client s3Client;
 
