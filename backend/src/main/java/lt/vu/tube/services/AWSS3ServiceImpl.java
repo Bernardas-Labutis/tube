@@ -1,6 +1,7 @@
-package lt.vu.tube.util;
+package lt.vu.tube.services;
 
 import lt.vu.tube.config.AWSConfig;
+import lt.vu.tube.util.AWSUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.core.sync.RequestBody;
@@ -11,10 +12,10 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Component
-public class AWSS3Utils {
+public class AWSS3ServiceImpl implements StorageService {
 
     @Autowired
-    AWSConfig awsConfig;
+    private AWSConfig awsConfig;
 
     private S3Client s3Client;
 
@@ -30,6 +31,7 @@ public class AWSS3Utils {
         multipartUploadMap = new HashMap<>();
     }
 
+    @Override
     public CreateMultipartUploadResponse createMultipartUpload(String path, String contentType) {
         CreateMultipartUploadResponse response = s3Client.createMultipartUpload(CreateMultipartUploadRequest.builder()
                 .bucket(awsConfig.getBucketName())
@@ -41,10 +43,12 @@ public class AWSS3Utils {
         return response;
     }
 
+    @Override
     public CreateMultipartUploadResponse createMultipartUpload(String path) {
         return createMultipartUpload(path, "binary/octet-stream");
     }
 
+    @Override
     public UploadPartResponse uploadPart(String uploadId, Integer partNumber, byte[] part) {
         UploadPartResponse response = s3Client.uploadPart(UploadPartRequest.builder()
                 .bucket(awsConfig.getBucketName())
@@ -56,6 +60,7 @@ public class AWSS3Utils {
         return response;
     }
 
+    @Override
     public UploadPartResponse uploadPart(String uploadId, byte[] part) {
         Integer partNumber = 1;
         if (!multipartUploadMap.get(uploadId).getParts().isEmpty()) {
@@ -64,6 +69,7 @@ public class AWSS3Utils {
         return uploadPart(uploadId, partNumber, part);
     }
 
+    @Override
     public CompleteMultipartUploadResponse completeMultipartUpload(String uploadId) {
         CompletedMultipartUpload completedMultipartUpload = CompletedMultipartUpload.builder().parts(
                 multipartUploadMap.get(uploadId).getParts().entrySet().stream()
@@ -84,6 +90,7 @@ public class AWSS3Utils {
         return response;
     }
 
+    @Override
     public AbortMultipartUploadResponse abortMultipartUpload(String uploadId) {
         AbortMultipartUploadResponse response = s3Client.abortMultipartUpload(AbortMultipartUploadRequest.builder()
                 .bucket(awsConfig.getBucketName())
@@ -94,6 +101,7 @@ public class AWSS3Utils {
         return response;
     }
 
+    @Override
     public PutObjectResponse uploadFileFromBytes(String path, byte[] bytes, String contentType) {
         return s3Client.putObject(PutObjectRequest.builder()
                 .bucket(awsConfig.getBucketName())
@@ -102,11 +110,13 @@ public class AWSS3Utils {
                 .build(), RequestBody.fromBytes(bytes));
     }
 
+    @Override
     public PutObjectResponse uploadFileFromBytes(String path, byte[] bytes) {
         return uploadFileFromBytes(path, bytes, "binary/octet-stream");
     }
 
     //API neturi move funkcijos reik copy ir delete daryt
+    @Override
     public MoveObjectResponse renameFile(String from, String to) {
         CopyObjectResponse copyObjectResponse = s3Client.copyObject(CopyObjectRequest.builder()
                 .copySource(String.format("%s/%s", awsConfig.getBucketName(), from))
@@ -121,6 +131,7 @@ public class AWSS3Utils {
         return new MoveObjectResponse(copyObjectResponse, deleteObjectResponse);
     }
 
+    @Override
     public HeadObjectResponse getFileInfo(String path) {
         HeadObjectResponse headObjectResponse = s3Client.headObject(HeadObjectRequest.builder()
                 .bucket(awsConfig.getBucketName())
@@ -129,41 +140,13 @@ public class AWSS3Utils {
         return headObjectResponse;
     }
 
+    @Override
     public DeleteObjectResponse deleteFile(String path) {
         DeleteObjectResponse deleteObjectResponse = s3Client.deleteObject(DeleteObjectRequest.builder()
                 .bucket(awsConfig.getBucketName())
                 .key(path)
                 .build());
         return deleteObjectResponse;
-    }
-
-    public static class MoveObjectResponse {
-        private CopyObjectResponse copyObjectResponse;
-        private DeleteObjectResponse deleteObjectResponse;
-
-        public MoveObjectResponse() {
-        }
-
-        public MoveObjectResponse(CopyObjectResponse copyObjectResponse, DeleteObjectResponse deleteObjectResponse) {
-            this.copyObjectResponse = copyObjectResponse;
-            this.deleteObjectResponse = deleteObjectResponse;
-        }
-
-        public CopyObjectResponse getCopyObjectResponse() {
-            return copyObjectResponse;
-        }
-
-        public void setCopyObjectResponse(CopyObjectResponse copyObjectResponse) {
-            this.copyObjectResponse = copyObjectResponse;
-        }
-
-        public DeleteObjectResponse getDeleteObjectResponse() {
-            return deleteObjectResponse;
-        }
-
-        public void setDeleteObjectResponse(DeleteObjectResponse deleteObjectResponse) {
-            this.deleteObjectResponse = deleteObjectResponse;
-        }
     }
 
     private static class MultipartUploadPartContainer {

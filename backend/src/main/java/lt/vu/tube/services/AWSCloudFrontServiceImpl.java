@@ -1,9 +1,9 @@
-package lt.vu.tube.util;
+package lt.vu.tube.services;
 
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lt.vu.tube.config.AWSConfig;
+import lt.vu.tube.util.AWSUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Base64Utils;
@@ -16,9 +16,12 @@ import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.*;
+import java.util.logging.Logger;
 
 @Component
-public class AWSCloudFrontUtils {
+public class AWSCloudFrontServiceImpl implements ContentDeliveryService {
+
+    private static final Logger logger = Logger.getLogger(AWSCloudFrontServiceImpl.class.toString());
 
     @Autowired
     private AWSConfig awsConfig;
@@ -27,6 +30,8 @@ public class AWSCloudFrontUtils {
     private CloudFrontClient cloudFrontClient;
     private PrivateKey privateKey;
     private ObjectMapper objectMapper;
+
+
     @PostConstruct
     private void init() throws Exception {
         cloudFrontClient = CloudFrontClient.builder()
@@ -44,12 +49,13 @@ public class AWSCloudFrontUtils {
                 .id(awsConfig.getDistributionID())
                 .build()).distribution().domainName();
     }
-
+    @Override
     public String getSignedUrl(String path, Integer expiration) throws Exception {
         return getSignedUrl(path, null, expiration);
     }
 
     //AWS java 2.0 neturi signing utility tai darau pats
+    @Override
     public String getSignedUrl(String path, Map<String, String> params, Integer expiration) throws Exception {
         Long expirationDate = System.currentTimeMillis() / 1000 + expiration;
         String baseUrl = String.format("https://%s/%s", distributionDomainName, path);
@@ -72,6 +78,8 @@ public class AWSCloudFrontUtils {
         String signature = buildSignatureJson(baseUrl, expirationDate);
         //Replace url unsafe chars
         signature = Base64Utils.encodeToString(signString(signature)).replace("+", "-").replace("=", "_").replace("/", "~");
+
+        logger.info(String.format("Url for '%s' signed by %s", path, this.getClass().toString()));
         return String.format("%s%sExpires=%d&Signature=%s&Key-Pair-Id=%s", baseUrl, params == null ? '?' : '&', expirationDate, signature, awsConfig.getPublicKeyId());
     }
 
@@ -107,6 +115,6 @@ public class AWSCloudFrontUtils {
                         statement
                 )
         );
-        return new ObjectMapper().writeValueAsString(jsonMap);
+        return objectMapper.writeValueAsString(jsonMap);
     }
 }
