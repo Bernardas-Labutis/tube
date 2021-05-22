@@ -63,8 +63,6 @@ public class VideoController {
     @Autowired
     private ContentDeliveryService contentDeliveryService;
     @Autowired
-    private EntityManager entityManager;
-    @Autowired
     private VideoRepository videoRepository;
     @Autowired
     private FunctionService functionService;
@@ -143,7 +141,7 @@ public class VideoController {
                                 storageService.abortMultipartUpload(response.uploadId());
                                 video.setStatus(VideoStatusEnum.UPLOAD_FAILED);
                                 video = videoRepository.save(video);
-                                logger.log(Level.INFO, String.format("Failed to upload video, reported filesize didn't match the real one and user didn't have enoug space. (reported: %d)", reportedFileSize));
+                                logger.log(Level.INFO, String.format("Failed to upload video, reported filesize didn't match the real one and user didn't have enough space. (reported: %d)", reportedFileSize));
                                 return new ResponseEntity<>(VideoUploadResponse.fail("Not enough space in storage"), HttpStatus.FORBIDDEN);
 
                             }
@@ -303,58 +301,6 @@ public class VideoController {
         } else {
             return new ResponseEntity<>(VideoDownloadResponse.fail("Unauthorized"), HttpStatus.UNAUTHORIZED);
         }
-    }
-
-    //Temporary delete later
-    @RequestMapping("")
-    @PreAuthorize("hasAnyRole('ROLE_USER')")
-    public String uploadVideo() throws IOException {
-        //Delete the resoource too
-        return Streams.asString(getClass().getClassLoader().getResourceAsStream("video.html"));
-    }
-
-    //Temporary delete later
-    @RequestMapping("/type")
-    @PreAuthorize("hasAnyRole('ROLE_USER')")
-    public LambdaResponse<MediaTypeResponseBody> getData(@RequestParam String key) throws Exception {
-        return functionService.getMediaType(key);
-    }
-
-    //Temporary delete later
-    @RequestMapping("/videos")
-    @PreAuthorize("hasAnyRole('ROLE_USER')")
-    public List<Video> getVideos() throws IOException {
-        return StreamSupport.stream(videoRepository.findAll().spliterator(), false).map(video -> {
-            if (video.getOwner() != null) {
-                video.getOwner().setVideos(null);
-                //Preventing a recursion explosion
-            }
-            return video;
-        }).collect(Collectors.toList());
-    }
-
-    //Temporary delete later
-    @RequestMapping("/videos/{id}")
-    @PreAuthorize("hasAnyRole('ROLE_USER')")
-    public List<Video> getVideos(@PathVariable Long id) throws IOException {
-        //Galima naudot appUserRepository.get(id) tada bus tik reference
-        //Bet tada negalima tiesiog video paverst į json, nes owner būna tik reference kas nesiverčia į json
-        return StreamSupport.stream(videoRepository.findVideosByOwner(appUserRepository.findById(id).orElse(null)).spliterator(), false).collect(Collectors.toList());
-    }
-
-    //Temporary delete later
-    @RequestMapping("/videoLinks")
-    @PreAuthorize("hasAnyRole('ROLE_USER')")
-    public Map<UUID, String> getVideoLinks() throws IOException {
-        return StreamSupport.stream(videoRepository.findAll().spliterator(), false)
-                .collect(Collectors.toMap(Video::getId, v -> {
-                    try {
-                        return contentDeliveryService.getSignedUrl(v.getPath(), 3600);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        return "";
-                    }
-                }));
     }
 
     @GetMapping("/userAvailable")

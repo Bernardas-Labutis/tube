@@ -31,7 +31,6 @@ public class AWSCloudFrontServiceImpl implements ContentDeliveryService {
     private PrivateKey privateKey;
     private ObjectMapper objectMapper;
 
-
     @PostConstruct
     private void init() throws Exception {
         cloudFrontClient = CloudFrontClient.builder()
@@ -49,6 +48,7 @@ public class AWSCloudFrontServiceImpl implements ContentDeliveryService {
                 .id(awsConfig.getDistributionID())
                 .build()).distribution().domainName();
     }
+
     @Override
     public String getSignedUrl(String path, Integer expiration) throws Exception {
         return getSignedUrl(path, null, expiration);
