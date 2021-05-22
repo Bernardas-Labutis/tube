@@ -256,6 +256,18 @@ public class VideoController {
         return new ResponseEntity<>(id, HttpStatus.OK);
     }
 
+    @GetMapping(value = "changeVisibility/{id}")
+    @PreAuthorize("hasAnyRole('ROLE_USER')")
+    public ResponseEntity<UUID> changeVisibility(@PathVariable UUID id, @RequestParam boolean isPublic) {
+        Optional<Video> video = videoRepository.findById(id);
+        if (video.isEmpty()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        video.get().setPublic(isPublic);
+        videoRepository.save(video.get());
+        return new ResponseEntity<>(id, HttpStatus.OK);
+    }
+
     @GetMapping(value = "/download/{id}")
     @PreAuthorize("hasAnyRole('ROLE_USER')")
     public ResponseEntity<VideoDownloadResponse> downloadVideo(@PathVariable UUID id) {

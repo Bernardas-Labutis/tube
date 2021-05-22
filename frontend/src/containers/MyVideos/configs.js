@@ -35,8 +35,8 @@ const columns = [
         render: object => renderCell(object, 'TextCell', 'size')
     },
     {
-        title: 'Privacy',
-        key: 'privacy',
+        title: 'Public',
+        key: 'public',
         width: 200,
         render: object => renderCell(object, 'TextCell', 'privacy')
     }

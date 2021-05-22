@@ -17,7 +17,7 @@ public class VideoDTO {
     private String title;
     private String uploadTime;
     private String size;
-    private String privacy;
+    private Boolean privacy;
     private String ownerUsername;
     private Integer version;
 
@@ -42,7 +42,7 @@ public class VideoDTO {
         this.title = title;
         this.uploadTime = uploadTime.toLocalDateTime().format(formatter);
         this.size = FileUtils.byteCountToDisplaySize(size);
-        privacy = isPublic ? "Public" : "Private";
+        this.privacy = isPublic;
         this.ownerUsername = ownerUsername;
         this.version = version;
     }
