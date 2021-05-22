@@ -5,6 +5,7 @@ import {
 	DeleteCell,
 	EditableCell,
 	DownloadCell,
+	VisibilityCell,
 } from "../../commonHelpers/helperCells";
 import { tableinfos } from "./configs";
 import axios from "axios";
@@ -13,8 +14,6 @@ import "react-modal-video/css/modal-video.min.css";
 import ModalVideo from "react-modal-video";
 import PageHeader from "../../components/utility/pageHeader";
 import LayoutWrapper from "../../components/utility/layoutWrapper";
-import ContentHolder from "../../components/utility/contentHolder";
-import Box from "../../components/utility/box";
 import { Row, Col, Button } from "antd";
 import basicStyle from "../../config/basicStyle";
 import TubeShareCell from "./tubesharecell";
@@ -23,13 +22,7 @@ import DropzoneWrapper from "../../containers/AdvancedUI/dropzone/dropzone.style
 import { notification } from "../../components";
 import FormData from "form-data";
 import checkforHeader from "../../axiosheader";
-import { dataList } from "../Tables/antTables";
 import Modals from "../../components/feedback/modal";
-import ModalStyle, { ModalContent } from "../Feedback/Modal/modal.style";
-import WithDirection from "../../../src/config/withDirection";
-
-const isoModal = ModalStyle(Modals);
-const Modal = WithDirection(isoModal);
 
 const confirm = Modals.confirm;
 const cancelTokenSource = axios.CancelToken.source();
@@ -99,11 +92,10 @@ export default class MyVideos extends Component {
 			/>
 		);
 		columns[3].render = (text, record, index) => (
-			<EditableCell
-				index={index}
-				columnsKey={columns[3].key}
-				value={text[columns[3].key]}
-				onChange={this.onCellChange}
+			<VisibilityCell
+				isPub={record.privacy}
+				index={record.id}
+				onVisibilityCell={this.onVisibilityCell}
 			/>
 		);
 		const deleteColumn = {
@@ -201,6 +193,13 @@ export default class MyVideos extends Component {
 		checkforHeader();
 		axios.get(`/video/soft-delete/${index}`).then(() => this.getData());
 	};
+
+	onVisibilityCell = (index, isPub) => {
+		checkforHeader();
+		axios.get(`/video/changeVisibility/${index}`, {params: {isPublic: !isPub}})
+			.then(() => this.getData());
+	};
+
 	onDownloadCell = (index) => {
 		checkforHeader();
 		axios.get(`/video/download/${index}`).then((response) => {

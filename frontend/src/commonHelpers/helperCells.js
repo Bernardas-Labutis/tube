@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import ImageCellView from "./imageCell";
 import { Icon, Input, Popconfirm } from "antd";
+import Checkbox from "../components/uielements/checkbox";
 
 const DateCell = (data) => <p>{data.toLocaleString()}</p>;
 const ImageCell = (src) => <ImageCellView src={src} />;
@@ -82,6 +83,27 @@ class EditableCell extends Component {
 		);
 	}
 }
+
+class VisibilityCell extends Component {
+	render() {
+		const { isPub, index, onVisibilityCell } = this.props;
+		return (
+			<div onClick={(e) => e.stopPropagation()}>
+				<Popconfirm
+					title="Sure to change visibility?"
+					okText="YES"
+					cancelText="No"
+					onConfirm={() => onVisibilityCell(index, isPub)}
+				>
+					<Checkbox
+						checked={isPub}
+					/>
+				</Popconfirm>
+			</div>
+		);
+	}
+}
+
 class DeleteCell extends Component {
 	render() {
 		const { index, onDeleteCell } = this.props;
@@ -118,24 +140,6 @@ class RestoreCell extends Component {
 	}
 }
 
-class ShareCell extends Component {
-	render() {
-		const { index, onShareCell } = this.props;
-		return (
-			<div onClick={(e) => e.stopPropagation()}>
-				<Popconfirm
-					title="Sure to share?"
-					okText="SHARE"
-					cancelText="No"
-					onConfirm={() => onShareCell(index)}
-				>
-					<a>Share</a>
-				</Popconfirm>
-			</div>
-		);
-	}
-}
-
 class DownloadCell extends Component {
 	render() {
 		const { index, onDownloadCell } = this.props;
@@ -160,8 +164,8 @@ export {
 	LinkCell,
 	TextCell,
 	EditableCell,
+	VisibilityCell,
 	DeleteCell,
 	RestoreCell,
-	ShareCell,
 	DownloadCell,
 };
