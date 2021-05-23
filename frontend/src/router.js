@@ -7,7 +7,7 @@ import App from './containers/App/App';
 import asyncComponent from './helpers/AsyncFunc';
 import Auth0 from './helpers/auth0';
 import axios from 'axios';
-
+import SharedVideo from './containers/SharedVideo/sharedvideo'
 const RestrictedRoute = ({ component: Component, isLoggedIn, ...rest }) => (
   <Route
     {...rest}
@@ -61,6 +61,11 @@ const PublicRoutes = ({ history, isLoggedIn }) => {
           component={App}
           isLoggedIn={isLoggedIn}
         />
+				<Route
+					exact
+					path={`/share/:uuid`}
+					component={SharedVideo}
+				/>
       </div>
     </ConnectedRouter>
   );
