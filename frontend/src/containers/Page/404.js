@@ -19,7 +19,7 @@ class FourZeroFour extends React.Component {
             <IntlMessages id="page404.description" />
           </p>
           <button type="button">
-            <Link to="/dashboard">
+            <Link to="/dashboard/my-videos">
               <IntlMessages id="page404.backButton" />
             </Link>
           </button>

@@ -45,7 +45,7 @@ class SignIn extends Component {
         <div className="isoLoginContentWrapper">
           <div className="isoLoginContent">
             <div className="isoLogoWrapper">
-              <Link to="/dashboard">
+              <Link to="/dashboard/my-videos">
                 TUBE
               </Link>
             </div>

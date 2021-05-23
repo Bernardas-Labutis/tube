@@ -10,13 +10,13 @@ export default function({ collapsed }) {
       {collapsed
         ? <div>
             <h3>
-              <Link to="/dashboard">
+              <Link to="/dashboard/my-videos">
                 <i className={siteConfig.siteIcon} />
               </Link>
             </h3>
           </div>
         : <h3>
-            <Link to="/dashboard">
+            <Link to="/dashboard/my-videos">
               {siteConfig.siteName}
             </Link>
           </h3>}

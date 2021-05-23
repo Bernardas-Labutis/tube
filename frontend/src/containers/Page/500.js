@@ -19,7 +19,7 @@ class FiveHundred extends React.Component {
             <IntlMessages id="page500.description" />
           </p>
           <button type="button">
-            <Link to="/dashboard">
+            <Link to="/dashboard/my-videos">
               <IntlMessages id="page500.backButton" />
             </Link>
           </button>
