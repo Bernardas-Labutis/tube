@@ -421,6 +421,7 @@ public class VideoController {
                     video.getCreated(),
                     video.getFileSize(),
                     video.getPublic(),
+                    video.getOwner().getUsername(),
                     viewUrl,
                     downloadUrl
             ), HttpStatus.OK);

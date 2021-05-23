@@ -64,7 +64,7 @@ class SignUp extends React.Component {
         <div className="isoSignUpContentWrapper">
           <div className="isoSignUpContent">
             <div className="isoLogoWrapper">
-              <Link to="/dashboard">
+              <Link to="/dashboard/my-videos">
                 <IntlMessages id="page.signUpTitle" />
               </Link>
             </div>
