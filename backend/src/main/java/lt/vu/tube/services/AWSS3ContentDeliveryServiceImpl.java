@@ -16,9 +16,8 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 //Extensibility pavyzdys
-//Atkomentavus šias dvi eilutes failai paduodami tiesiai iš storage bucket
-//@Primary
-//@Component
+//Duoda failus tiesiai iš storage o ner per CDN
+@Component
 public class AWSS3ContentDeliveryServiceImpl implements ContentDeliveryService {
 
     private static final Logger logger = Logger.getLogger(AWSS3ContentDeliveryServiceImpl.class.toString());
