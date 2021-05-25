@@ -196,7 +196,10 @@ export default class MyVideos extends Component {
 
 	onVisibilityCell = (index, isPub) => {
 		checkforHeader();
-		axios.get(`/video/changeVisibility/${index}`, {params: {isPublic: !isPub}})
+		axios
+			.get(`/video/changeVisibility/${index}`, {
+				params: { isPublic: !isPub },
+			})
 			.then(() => this.getData());
 	};
 
@@ -355,9 +358,7 @@ export default class MyVideos extends Component {
 				);
 			},
 			onCancel() {
-				window.location.replace(
-					"http://localhost:3000/dashboard/my-videos"
-				);
+				window.location.reload();
 			},
 			okText: "Force",
 			cancelText: "Reload",
