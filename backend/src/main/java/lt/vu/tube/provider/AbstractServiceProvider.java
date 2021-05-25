@@ -22,11 +22,11 @@ public abstract class AbstractServiceProvider<T> {
     }
 
     protected void initProvider(String className) {
-        service = getService(serviceList, className);
+        service = findService(serviceList, className);
         logger.info("Selected " + (service == null ? "null" : service.getClass().getName()));
     }
 
-    protected T getService(List<T> serviceList, String className) {
+    protected T findService(List<T> serviceList, String className) {
         return serviceList.stream().filter(o->o.getClass().getName().equals(className)).findFirst().orElse(null);
     }
 }
