@@ -9,6 +9,9 @@ import lt.vu.tube.entity.VideoShareLink;
 import lt.vu.tube.enums.VideoStatusEnum;
 import lt.vu.tube.model.LambdaResponse;
 import lt.vu.tube.model.MediaTypeResponseBody;
+import lt.vu.tube.provider.ContentDeliveryServiceProvider;
+import lt.vu.tube.provider.FunctionServiceProvider;
+import lt.vu.tube.provider.StorageServiceProvider;
 import lt.vu.tube.repository.AppUserRepository;
 import lt.vu.tube.repository.CurrentUserVideoDAO;
 import lt.vu.tube.repository.VideoRepository;
@@ -34,7 +37,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import software.amazon.awssdk.awscore.exception.AwsServiceException;
 
-import javax.persistence.EntityManager;
+import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.io.InputStream;
@@ -59,15 +62,28 @@ public class VideoController {
     @Autowired
     VideoShareLinkRepository videoShareLinkRepository;
     @Autowired
-    private StorageService storageService;
-    @Autowired
-    private ContentDeliveryService contentDeliveryService;
-    @Autowired
     private VideoRepository videoRepository;
     @Autowired
-    private FunctionService functionService;
-    @Autowired
     private AppUserRepository appUserRepository;
+
+    @Autowired
+    private ContentDeliveryServiceProvider contentDeliveryServiceProvider;
+    private ContentDeliveryService contentDeliveryService;
+
+    @Autowired
+    private StorageServiceProvider storageServiceProvider;
+    private StorageService storageService;
+
+    @Autowired
+    private FunctionServiceProvider functionServiceProvider;
+    private FunctionService functionService;
+
+    @PostConstruct
+    private void init() {
+        contentDeliveryService = contentDeliveryServiceProvider.getService();
+        storageService = storageServiceProvider.getService();
+        functionService = functionServiceProvider.getService();
+    }
 
     @RequestMapping(value = "/upload")
     @PreAuthorize("hasAnyRole('ROLE_USER')")
