@@ -40,6 +40,7 @@ class Topbar extends Component {
           </div>
 
           <ul className="isoRight">
+            {/*
             <li className="isoSearch">
               <TopbarSearch locale={locale} />
             </li>
@@ -49,6 +50,7 @@ class Topbar extends Component {
               className="isoNotify">
               <TopbarNotification locale={locale} />
             </li>
+            */}
 
             <li
               onClick={() => this.setState({ selectedItem: 'user' })}

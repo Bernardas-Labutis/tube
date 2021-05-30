@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import Popover from '../uielements/popover';
 import IntlMessages from '../utility/intlMessages';
-import userpic from '../../image/user1.png';
+import userpic from '../../image/user_icon.png';
 import authAction from '../../redux/auth/actions';
 import TopbarDropdownWrapper from './topbarDropdown.style';
 
@@ -27,6 +27,7 @@ class TopbarUser extends Component {
   render() {
     const content = (
       <TopbarDropdownWrapper className="isoUserDropdown">
+        {/*
         <a className="isoDropdownLink">
           <IntlMessages id="themeSwitcher.settings" />
         </a>
@@ -36,6 +37,7 @@ class TopbarUser extends Component {
         <a className="isoDropdownLink">
           <IntlMessages id="topbar.help" />
         </a>
+        */}
         <a className="isoDropdownLink" onClick={this.props.logout}>
           <IntlMessages id="topbar.logout" />
         </a>
@@ -53,7 +55,7 @@ class TopbarUser extends Component {
       >
         <div className="isoImgWrapper">
           <img alt="user" src={userpic} />
-          <span className="userActivity online" />
+          {/*<span className="userActivity online" />*/}
         </div>
       </Popover>
     );
